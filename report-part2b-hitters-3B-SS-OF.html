@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Fantasy Baseball — Part 2B: Hitter Profiles (3B, SS, OF)</title>
+<style>
+:root {
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#242736;--border:#2e3347;
+  --text:#e2e8f0;--muted:#8892a4;--accent:#4f9cf9;--accent2:#7c5cbf;
+  --green:#22c55e;--green-bg:#052e16;--yellow:#f59e0b;--yellow-bg:#2d1e02;
+  --red:#ef4444;--red-bg:#2d0a0a;--gold:#fbbf24;--orange:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:14px;}
+header{background:linear-gradient(135deg,#1e2a4a,#2d1b4e);padding:2rem;border-bottom:2px solid var(--accent2);text-align:center;}
+header h1{font-size:1.8rem;color:var(--gold);font-weight:700;}
+header p{color:var(--muted);margin-top:.4rem;font-size:.9rem;}
+nav.pos-nav{display:flex;gap:.5rem;justify-content:center;padding:1rem;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);}
+nav.pos-nav a{background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:6px;padding:.4rem 1rem;text-decoration:none;font-weight:600;font-size:.85rem;}
+nav.pos-nav a:hover{background:var(--accent);color:#fff;}
+main{max-width:1200px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.pos-section{margin-bottom:3rem;}
+.pos-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:2px solid var(--accent2);}
+.pos-badge{background:var(--accent2);color:#fff;font-size:1.1rem;font-weight:800;padding:.3rem .8rem;border-radius:6px;}
+.pos-header h2{color:var(--gold);font-size:1.4rem;}
+.pos-depth{color:var(--muted);font-size:.85rem;margin-left:auto;}
+.depth-deep{color:var(--green);}
+.depth-mod{color:var(--yellow);}
+.depth-thin{color:var(--red);}
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(560px,1fr));gap:1rem;}
+.player-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.player-card.tier1{border-color:var(--gold);}
+.card-header{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);}
+.rank-num{background:var(--accent2);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;}
+.tier1 .rank-num{background:linear-gradient(135deg,#b45309,#f59e0b);}
+.player-name{font-size:1rem;font-weight:700;color:var(--text);}
+.player-team{color:var(--muted);font-size:.8rem;}
+.player-age{color:var(--muted);font-size:.78rem;margin-left:auto;}
+.archetype{font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;letter-spacing:.3px;}
+.arch-steady{background:#052e16;color:var(--green);border:1px solid var(--green);}
+.arch-boom{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+.arch-speed{background:#0c1a4a;color:var(--accent);border:1px solid var(--accent);}
+.arch-power{background:#2d1b00;color:var(--orange);border:1px solid var(--orange);}
+.arch-five{background:#1a0a2e;color:var(--accent2);border:1px solid var(--accent2);}
+.stat-wrap{overflow-x:auto;}
+table.stats{width:100%;border-collapse:collapse;font-size:.78rem;}
+table.stats th{background:var(--surface2);color:var(--accent);padding:.35rem .5rem;text-align:center;font-weight:600;border-bottom:1px solid var(--border);}
+table.stats td{padding:.3rem .5rem;text-align:center;border-bottom:1px solid var(--border);color:var(--muted);}
+table.stats tr.proj td{color:var(--gold);font-weight:600;}
+table.stats td:first-child{text-align:left;color:var(--muted);font-weight:600;}
+.savant-row{display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem .75rem;background:var(--bg);border-bottom:1px solid var(--border);}
+.sv-chip{font-size:.72rem;padding:.15rem .45rem;border-radius:3px;background:var(--surface2);color:var(--muted);}
+.sv-chip span{color:var(--text);font-weight:600;}
+.card-body{padding:.75rem 1rem;}
+.card-body ul{padding-left:1.1rem;margin-bottom:.5rem;}
+.card-body li{margin:.2rem 0;color:var(--muted);font-size:.82rem;}
+.card-body li strong{color:var(--text);}
+.up-risk{display:flex;gap:.75rem;margin-top:.5rem;flex-wrap:wrap;}
+.upside{font-size:.78rem;color:var(--green);background:var(--green-bg);padding:.3rem .6rem;border-radius:4px;flex:1;min-width:200px;}
+.risk{font-size:.78rem;color:var(--red);background:var(--red-bg);padding:.3rem .6rem;border-radius:4px;flex:1;min-width:200px;}
+.upside strong,.risk strong{display:block;font-size:.72rem;letter-spacing:.5px;margin-bottom:.1rem;opacity:.8;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;background:var(--surface2);border-top:1px solid var(--border);}
+.value-base{color:var(--muted);font-size:.78rem;}
+.value-infl{color:var(--gold);font-weight:700;font-size:.9rem;}
+.points-note{color:var(--muted);font-size:.72rem;}
+.tier-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.5rem;margin-top:1rem;}
+.brief-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.6rem .75rem;display:flex;gap:.5rem;align-items:flex-start;}
+.brief-rank{color:var(--accent2);font-weight:700;font-size:.78rem;flex-shrink:0;width:28px;}
+.brief-name{font-weight:600;font-size:.85rem;}
+.brief-proj{color:var(--muted);font-size:.75rem;}
+.brief-val{color:var(--gold);font-size:.75rem;font-weight:600;}
+.tier-subhead{color:var(--muted);font-size:.8rem;font-weight:600;margin:1rem 0 .5rem;text-transform:uppercase;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>2026 Fantasy Baseball — Part 2B: Hitter Profiles</h1>
+  <p>Third Basemen (3B) &bull; Shortstops (SS) &bull; Outfielders (OF) &bull; Top 30 per position &bull; Points-format values (~47% inflation)</p>
+</header>
+
+<nav class="pos-nav">
+  <a href="report-part2a-hitters-C-1B-2B.html">← Part 2A: C / 1B / 2B</a>
+  <a href="#thirdbase">3B — Third Base</a>
+  <a href="#shortstop">SS — Shortstop</a>
+  <a href="#outfield">OF — Outfield</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════ THIRD BASE ═══ -->
+<section class="pos-section" id="thirdbase">
+  <div class="pos-header">
+    <span class="pos-badge">3B</span>
+    <h2>Third Basemen — Top 30</h2>
+    <span class="pos-depth depth-mod">Depth: THIN — Elite Tier 1–2; steep cliff after #4</span>
+  </div>
+  <p style="color:var(--muted);margin-bottom:1rem;font-size:.85rem;"><strong>3B is your biggest roster gap.</strong> Ramirez is the consensus #1 fantasy player at the position by a wide margin. Budget $35–50 (inflation-adjusted) to land him or Caminero. After the top two, value drops significantly — plan accordingly.</p>
+
+  <div class="player-grid">
+
+    <!-- 3B1: Jose Ramirez -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">1</div>
+        <div>
+          <div class="player-name">José Ramírez</div>
+          <div class="player-team">Cleveland Guardians &bull; 3B</div>
+        </div>
+        <div class="player-age">Age 33</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>158</td><td>39</td><td>106</td><td>106</td><td>33</td><td>.272</td><td>.360</td><td>.524</td></tr>
+          <tr><td>2025</td><td>154</td><td>30</td><td>98</td><td>96</td><td>44</td><td>.283</td><td>.368</td><td>.498</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>155</td><td>32</td><td>100</td><td>98</td><td>38</td><td>.278</td><td>.362</td><td>.510</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Barrel%: <span>~14%</span></div>
+        <div class="sv-chip">HardHit%: <span>~48%</span></div>
+        <div class="sv-chip">Sprint Speed: <span>~28 ft/s</span></div>
+        <div class="sv-chip">BB%: <span>~12%</span></div>
+        <div class="sv-chip">Consistency: <span>6 straight 25+ HR / 25+ SB seasons</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Best 3B in fantasy, not close:</strong> Six consecutive 25+ HR / 25+ SB seasons. Only José Ramírez does this. In 2025 he stole a career-best 44 bases on top of 30 HR.</li>
+          <li><strong>Points format multiplier:</strong> 32 HR × 5.3 net = 170 pts + 38 SB × 2.0 = 76 pts + 100 R × 1.1 = 110 pts = just from these three categories alone, ~356 pts before 2B/1B hits, RBI, BB.</li>
+          <li><strong>3B position scarcity bonus:</strong> In a 10-team league, your roster has NO 3B keeper. Ramirez fills the biggest gap while providing top-5 overall player value.</li>
+          <li><strong>Age 33 risk:</strong> Speed typically declines first in aging — SB pace may slow from 44 toward 30–35, but at 33 Ramirez shows no signs of major decline.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 35 HR, 40+ SB — top-3 overall fantasy player in any format. Has done it repeatedly.</div>
+          <div class="risk"><strong>RISK</strong> Age-related SB decline (30 → 20 range). Guardians lineup average, limiting RBI ceiling. Price ($40–55 inflation-adjusted) is steep.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $38</span>
+        <span class="value-infl">Infl. Value: ~$56</span>
+        <span class="points-note">YOUR #1 AUCTION TARGET — fills 3B gap perfectly</span>
+      </div>
+    </div>
+
+    <!-- 3B2: Junior Caminero -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">2</div>
+        <div>
+          <div class="player-name">Junior Caminero</div>
+          <div class="player-team">Tampa Bay Rays &bull; 3B</div>
+        </div>
+        <div class="player-age">Age 22</div>
+        <span class="archetype arch-power">POWER BAT</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>98</td><td>18</td><td>48</td><td>56</td><td>4</td><td>.262</td><td>.318</td><td>.488</td></tr>
+          <tr><td>2025</td><td>152</td><td>45</td><td>96</td><td>118</td><td>6</td><td>.272</td><td>.334</td><td>.560</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>36</td><td>88</td><td>100</td><td>5</td><td>.262</td><td>.322</td><td>.518</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Bat Speed: <span>78.5 mph (elite)</span></div>
+        <div class="sv-chip">Age: <span>22 — massive ceiling</span></div>
+        <div class="sv-chip">HR 2025: <span>45 (career high, all at 21)</span></div>
+        <div class="sv-chip">K%: <span>~26% (concern)</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>45 HR at age 21:</strong> One of the most jaw-dropping power seasons ever by a 21-year-old. The 78.5 mph bat speed validates the raw power as generational.</li>
+          <li><strong>Regression in projection:</strong> 36 HR projected for 2026 — still elite production. MLB adjustments may expose K% issues before he counters.</li>
+          <li><strong>Long-term buy:</strong> At 22, Caminero could be the #1 overall fantasy asset for the next 5+ years if he maintains health and develops contact skills.</li>
+          <li><strong>Points format and K%:</strong> 26% K rate generates meaningful AB + K penalty drag. Watch for contact improvements in spring metrics.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 40+ HR, .275 BA — the next generational power 3B. Buy now before price explodes further.</div>
+          <div class="risk"><strong>RISK</strong> Pitchers adjust, K% rises, regression to .240/28 HR. Rays may control innings/load management.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $32</span>
+        <span class="value-infl">Infl. Value: ~$47</span>
+        <span class="points-note">Generational ceiling — buy if Ramirez priced out</span>
+      </div>
+    </div>
+
+    <!-- 3B3: Manny Machado -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">3</div>
+        <div>
+          <div class="player-name">Manny Machado</div>
+          <div class="player-team">San Diego Padres &bull; 3B/SS</div>
+        </div>
+        <div class="player-age">Age 33</div>
+        <span class="archetype arch-steady">STEADY EDDIE</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>155</td><td>26</td><td>82</td><td>90</td><td>10</td><td>.256</td><td>.326</td><td>.456</td></tr>
+          <tr><td>2025</td><td>148</td><td>27</td><td>84</td><td>88</td><td>14</td><td>.275</td><td>.344</td><td>.476</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>26</td><td>82</td><td>86</td><td>12</td><td>.270</td><td>.338</td><td>.465</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Consistency: <span>5 straight 25+ HR</span></div>
+        <div class="sv-chip">SB: <span>Resurgence (14 in 2025)</span></div>
+        <div class="sv-chip">BB%: <span>~9%</span></div>
+        <div class="sv-chip">Multi-pos: <span>3B/SS eligibility</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Tier 1B at 3B:</strong> Not Ramirez/Caminero level, but Machado offers a consistent 25–28 HR, 14 SB floor you can bank on.</li>
+          <li><strong>SB renaissance:</strong> Added 14 SB in 2025 — unusual at 32. Provides points scoring from an unexpected category for his age/profile.</li>
+          <li><strong>Multi-pos value:</strong> 3B/SS eligibility unlocks roster flexibility in a 10-team league.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 30 HR, 18 SB, .280 — the best bet for consistent 3B production if you miss on Ramirez/Caminero.</div>
+          <div class="risk"><strong>RISK</strong> Age (33) + Petco Park suppression. SB pace may not repeat at this age.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $22</span>
+        <span class="value-infl">Infl. Value: ~$32</span>
+      </div>
+    </div>
+
+    <!-- 3B4: Eugenio Suarez -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">4</div>
+        <div>
+          <div class="player-name">Eugenio Suárez</div>
+          <div class="player-team">Cincinnati Reds &bull; 3B</div>
+        </div>
+        <div class="player-age">Age 35</div>
+        <span class="archetype arch-power">POWER BAT</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>148</td><td>32</td><td>82</td><td>92</td><td>2</td><td>.238</td><td>.316</td><td>.472</td></tr>
+          <tr><td>2025</td><td>155</td><td>49</td><td>96</td><td>118</td><td>2</td><td>.248</td><td>.330</td><td>.558</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>36</td><td>88</td><td>100</td><td>2</td><td>.240</td><td>.318</td><td>.498</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">HR 2025: <span>49 (career high at 34)</span></div>
+        <div class="sv-chip">K%: <span>~28% (high)</span></div>
+        <div class="sv-chip">BA: <span>.238–.248 range</span></div>
+        <div class="sv-chip">Age: <span>35 — regression risk real</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>49 HR at age 34:</strong> Stunning but almost certainly a peak. Great American Ball Park plays to his pull-side power maximally.</li>
+          <li><strong>Points format drag:</strong> 28% K rate + low BA (.240) generate significant AB + K penalty. Even with 36 HR projected, efficiency is below peers.</li>
+          <li><strong>Buy the name, not the 2025 line:</strong> 49 HR is not repeatable. Model 32–38 HR with .240 BA as the realistic 2026 range.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Great American park + swing stays hot: 40+ HR, 105 RBI. Pure power archetype.</div>
+          <div class="risk"><strong>RISK</strong> Age-related decline at 35. K rate compounds AB penalty. BA drag erodes points total.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $22</span>
+        <span class="value-infl">Infl. Value: ~$32</span>
+        <span class="points-note">K% drag reduces value vs. roto</span>
+      </div>
+    </div>
+
+    <!-- 3B5: Austin Riley -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">5</div>
+        <div>
+          <div class="player-name">Austin Riley</div>
+          <div class="player-team">Atlanta Braves &bull; 3B</div>
+        </div>
+        <div class="player-age">Age 29</div>
+        <span class="archetype arch-boom">BOOM/BUST</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>90</td><td>12</td><td>46</td><td>48</td><td>2</td><td>.258</td><td>.318</td><td>.438</td></tr>
+          <tr><td>2025</td><td>104</td><td>16</td><td>54</td><td>56</td><td>3</td><td>.264</td><td>.325</td><td>.452</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>145</td><td>28</td><td>82</td><td>88</td><td>4</td><td>.272</td><td>.335</td><td>.490</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Exit Velo: <span>92.3 mph (elite)</span></div>
+        <div class="sv-chip">Injury: <span>2 straight partial seasons</span></div>
+        <div class="sv-chip">Peak: <span>3 straight 30+ HR pre-injury</span></div>
+        <div class="sv-chip">Braves: <span>Premium lineup</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Injury comeback narrative:</strong> Two straight injury-shortened seasons after three consecutive 30+ HR years. At 29, he's at the prime of his power curve if healthy.</li>
+          <li><strong>Elite exit velocity:</strong> 92.3 mph average exit velocity — the raw power hasn't disappeared, just been unavailable due to health.</li>
+          <li><strong>Braves context:</strong> Acuña, Harris, Olson, Baldwin around him — when Riley plays, he produces premium R/RBI totals.</li>
+          <li><strong>Buy the discount:</strong> If market prices him as an injured player (sub-$25 infl. adjusted), Riley is one of the best value plays at 3B.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Returns to full health: 33 HR, 95 RBI, .272 — top-3 3B value at a 5th-place price.</div>
+          <div class="risk"><strong>RISK</strong> Third straight injury year. Body can't hold up for 150 games anymore. Counting stats collapse in short seasons.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $22</span>
+        <span class="value-infl">Infl. Value: ~$32</span>
+        <span class="points-note">Best 3B value play if health question suppresses price</span>
+      </div>
+    </div>
+
+    <!-- 3B6: Alex Bregman -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">6</div>
+        <div>
+          <div class="player-name">Alex Bregman</div>
+          <div class="player-team">Chicago Cubs &bull; 3B</div>
+        </div>
+        <div class="player-age">Age 32</div>
+        <span class="archetype arch-steady">STEADY EDDIE</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>148</td><td>26</td><td>82</td><td>88</td><td>4</td><td>.260</td><td>.356</td><td>.460</td></tr>
+          <tr><td>2025</td><td>103</td><td>18</td><td>64</td><td>62</td><td>3</td><td>.273</td><td>.360</td><td>.462</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>145</td><td>22</td><td>78</td><td>80</td><td>4</td><td>.265</td><td>.355</td><td>.455</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">OBP: <span>.356–.360 (elite)</span></div>
+        <div class="sv-chip">BB%: <span>~12%</span></div>
+        <div class="sv-chip">Injury 2025: <span>Quad strain (59 G missed)</span></div>
+        <div class="sv-chip">Cubs lineup: <span>Adequate context</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Points format OBP value:</strong> .356+ OBP driven by 12% BB rate = free points accumulation. In this scoring system, Bregman's walk rate is underappreciated.</li>
+          <li><strong>Injury history building:</strong> Quad strain in 2025, other nagging issues — at 32, durability becomes a real concern.</li>
+          <li><strong>High floor, moderate ceiling:</strong> Won't give you 30 HR but provides safe .265 BA, 22 HR, high BB production reliably when healthy.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Full health, 26 HR, .360 OBP, 80 R — premium points scorer given walk rate efficiency.</div>
+          <div class="risk"><strong>RISK</strong> Third injury year in a row. Power below 20 HR is below replacement for a high-price 3B.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $17</span>
+        <span class="value-infl">Infl. Value: ~$25</span>
+        <span class="points-note">BB rate = hidden points value</span>
+      </div>
+    </div>
+
+  </div><!-- end player-grid -->
+
+  <div class="tier-subhead">3B Ranks 7–20</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">7</div><div class="brief-content"><div class="brief-name">Maikel Garcia — KC</div><div class="brief-proj">Proj: 16 HR, 78R, 65 RBI, 23 SB, .286 | Speed/contact combo; Royals leadoff</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">8</div><div class="brief-content"><div class="brief-name">Jordan Westburg — BAL</div><div class="brief-proj">Proj: 18 HR, 72R, 70 RBI, 8 SB, .262 | Multi-pos; Orioles lineup; developing</div><div class="brief-val">~$19 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">9</div><div class="brief-content"><div class="brief-name">Matt Chapman — SF</div><div class="brief-proj">Proj: 22 HR, 72R, 76 RBI, .248 | Elite defender; .340 OBP; Giants context</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">10</div><div class="brief-content"><div class="brief-name">Isaac Paredes — CHC</div><div class="brief-proj">Proj: 20 HR, 70R, 72 RBI, .255 | Trade from Rays; high BB%; developing context</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">11</div><div class="brief-content"><div class="brief-name">Alec Bohm — STL</div><div class="brief-proj">Proj: 18 HR, 72R, 78 RBI, .278 | Contact + power balance; Cardinals context</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">12</div><div class="brief-content"><div class="brief-name">Royce Lewis — MIN</div><div class="brief-proj">Proj: 22 HR, 72R, 76 RBI, 10 SB, .270 | Elite upside; injury history is brutal concern</div><div class="brief-val">~$19 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">13</div><div class="brief-content"><div class="brief-name">Josh Jung — TEX</div><div class="brief-proj">Proj: 20 HR, 68R, 74 RBI, .260 | Power upside; injury concerns continue</div><div class="brief-val">~$16 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">14</div><div class="brief-content"><div class="brief-name">Noelvi Marte — CIN</div><div class="brief-proj">Proj: 18 HR, 68R, 70 RBI, 8 SB, .258 | Young talent developing; power-speed upside</div><div class="brief-val">~$15 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">15</div><div class="brief-content"><div class="brief-name">Colson Montgomery — CHW</div><div class="brief-proj">Proj: 16 HR, 62R, 65 RBI, .255 | Top prospect; White Sox weak lineup limits counting</div><div class="brief-val">~$13 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">16</div><div class="brief-content"><div class="brief-name">Ryan McMahon — COL</div><div class="brief-proj">Proj: 18 HR, 66R, 72 RBI, .250 | Coors boost; splits are severe</div><div class="brief-val">~$13 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">17</div><div class="brief-content"><div class="brief-name">Ke'Bryan Hayes — PIT</div><div class="brief-proj">Proj: 14 HR, 62R, 62 RBI, 10 SB, .258 | Elite defender; power ceiling capped by PNC</div><div class="brief-val">~$12 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">18</div><div class="brief-content"><div class="brief-name">Addison Barger — TOR</div><div class="brief-proj">Proj: 18 HR, 65R, 68 RBI, .255 | Emerging power; Blue Jays decent context</div><div class="brief-val">~$14 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">19</div><div class="brief-content"><div class="brief-name">Jake Cronenworth — SD</div><div class="brief-proj">Proj: 12 HR, 60R, 58 RBI, 6 SB, .258 | Multi-pos; Petco suppresses power</div><div class="brief-val">~$10 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">20</div><div class="brief-content"><div class="brief-name">Chris Morel — CHC</div><div class="brief-proj">Proj: 18 HR, 64R, 66 RBI, 8 SB, .242 | Power upside; high K%; Cubs context</div><div class="brief-val">~$12 infl.</div></div></div>
+  </div>
+
+  <div class="tier-subhead">3B Ranks 21–30 — Depth / Streaming</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">21</div><div class="brief-content"><div class="brief-name">Joey Ortiz — MIL</div><div class="brief-proj">14 HR, .255, solid glove; depth option</div><div class="brief-val">~$10 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">22</div><div class="brief-content"><div class="brief-name">Emmanuel Rivera — various</div><div class="brief-proj">10 HR, .252; utility/depth</div><div class="brief-val">~$6 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">23</div><div class="brief-content"><div class="brief-name">Yoán Moncada — CHW</div><div class="brief-proj">10 HR, .248; injury history; once-great</div><div class="brief-val">~$7 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">24</div><div class="brief-content"><div class="brief-name">Jonathan India — CIN</div><div class="brief-proj">12 HR, .252, 8 SB; former ROY fading</div><div class="brief-val">~$9 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">25-30</div><div class="brief-content"><div class="brief-name">Depth / Prospects</div><div class="brief-proj">Streaming only — check waiver wire during season</div><div class="brief-val">~$1-5 infl.</div></div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════ SHORTSTOP ═══ -->
+<section class="pos-section" id="shortstop">
+  <div class="pos-header">
+    <span class="pos-badge">SS</span>
+    <h2>Shortstops — Top 30</h2>
+    <span class="pos-depth depth-deep">Depth: DEEP — Best overall position in 2026 fantasy</span>
+  </div>
+  <p style="color:var(--muted);margin-bottom:1rem;font-size:.85rem;">You already own Tovar ($2) and Swanson ($12) as keepers, giving you SS covered. Shortstop is the strongest position in fantasy — there are multiple first-round caliber options. Let others overpay; your coverage is adequate.</p>
+
+  <div class="player-grid">
+
+    <!-- SS1: Bobby Witt Jr. -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">1</div>
+        <div>
+          <div class="player-name">Bobby Witt Jr.</div>
+          <div class="player-team">Kansas City Royals &bull; SS</div>
+        </div>
+        <div class="player-age">Age 25</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>158</td><td>32</td><td>108</td><td>96</td><td>36</td><td>.332</td><td>.388</td><td>.588</td></tr>
+          <tr><td>2025</td><td>156</td><td>28</td><td>104</td><td>92</td><td>32</td><td>.295</td><td>.358</td><td>.528</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>156</td><td>29</td><td>106</td><td>95</td><td>33</td><td>.294</td><td>.358</td><td>.540</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Exit Velo: <span>~92 mph</span></div>
+        <div class="sv-chip">Sprint Speed: <span>~29.5 ft/s (elite)</span></div>
+        <div class="sv-chip">BB%: <span>~9%</span></div>
+        <div class="sv-chip">K%: <span>~18%</span></div>
+        <div class="sv-chip">Age: <span>25 — peak years ahead</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>SS1 by consensus and not close:</strong> 29 HR + 33 SB + 106 R + .294 BA at shortstop is historically exceptional. Only Witt Jr. does this consistently.</li>
+          <li><strong>Peak age 25:</strong> Still ascending into his prime. Experts project a potential 40 HR/40 SB season within the next 2–3 years.</li>
+          <li><strong>Points format calculation:</strong> 33 SB × 2.0 = 66 pts + 29 HR × 5.3 = 154 pts + 106 R × 1.1 = 117 pts = 337 pts from just three categories before his 1B/2B hits.</li>
+          <li><strong>KC lineup context:</strong> Improved Royals lineup (Pasquantino, Perez, Garcia) provides adequate RBI support.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 35 HR, 40 SB, .305 BA — top-3 overall fantasy player in any format. Generational talent.</div>
+          <div class="risk"><strong>RISK</strong> Short-term regression (2025 BA drop from .332 to .295). Royals lineup limits RBI upside vs. elite teams.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $40</span>
+        <span class="value-infl">Infl. Value: ~$59</span>
+        <span class="points-note">You have SS covered — target only if truly the best value</span>
+      </div>
+    </div>
+
+    <!-- SS2: Gunnar Henderson -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">2</div>
+        <div>
+          <div class="player-name">Gunnar Henderson</div>
+          <div class="player-team">Baltimore Orioles &bull; SS</div>
+        </div>
+        <div class="player-age">Age 25</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>157</td><td>37</td><td>108</td><td>102</td><td>18</td><td>.281</td><td>.365</td><td>.548</td></tr>
+          <tr><td>2025</td><td>140</td><td>24</td><td>88</td><td>78</td><td>20</td><td>.262</td><td>.338</td><td>.462</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>152</td><td>30</td><td>96</td><td>92</td><td>22</td><td>.276</td><td>.352</td><td>.510</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">2025 context: <span>Spring oblique injury suppressed season</span></div>
+        <div class="sv-chip">True talent: <span>35 HR / 20 SB / .280 BA</span></div>
+        <div class="sv-chip">Age: <span>25 — prime window</span></div>
+        <div class="sv-chip">Orioles: <span>Strong lineup support</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Down year was injury-related:</strong> Spring oblique injury derailed his 2025. True talent level is 35+ HR, 20+ SB, .280 BA — closer to 2024 than 2025.</li>
+          <li><strong>Best value at SS:</strong> If market prices him as a 2025 performer ($30–35 infl.), that's a steal for a healthy 2024-level player.</li>
+          <li><strong>Orioles lineup:</strong> Alonso now in Baltimore — premium lineup protects Henderson and drives RBI opportunities.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Full health rebound: 37 HR, 22 SB, .282 BA — equals or surpasses Witt in counting stats.</div>
+          <div class="risk"><strong>RISK</strong> Injury recurs. 2025 adjusted metrics suggest true decline, not just injury. BA settles at .262.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $30</span>
+        <span class="value-infl">Infl. Value: ~$44</span>
+        <span class="points-note">Best value if 2025 suppresses his auction price</span>
+      </div>
+    </div>
+
+    <!-- SS3: Elly De La Cruz -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">3</div>
+        <div>
+          <div class="player-name">Elly De La Cruz</div>
+          <div class="player-team">Cincinnati Reds &bull; SS</div>
+        </div>
+        <div class="player-age">Age 23</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>148</td><td>28</td><td>92</td><td>78</td><td>67</td><td>.241</td><td>.319</td><td>.482</td></tr>
+          <tr><td>2025</td><td>148</td><td>22</td><td>86</td><td>80</td><td>40</td><td>.265</td><td>.338</td><td>.452</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>25</td><td>91</td><td>86</td><td>40</td><td>.265</td><td>.338</td><td>.472</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Sprint Speed: <span>Top-1% MLB</span></div>
+        <div class="sv-chip">K%: <span>Improved in 2025</span></div>
+        <div class="sv-chip">SB: <span>67 (2024) → 40 (2025) — contact gains traded some speed</span></div>
+        <div class="sv-chip">Age: <span>23 — massive ceiling</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>67 SB at age 22 was historical:</strong> Even with the pullback to 40 in 2025, De La Cruz is the premier base stealer in baseball at 23.</li>
+          <li><strong>BA improvement is meaningful:</strong> .241 → .265 with improved strikeout rates suggests real plate skills development. The 2025 version is better than the 2024 version despite lower SB totals.</li>
+          <li><strong>Points format SB value:</strong> 40 SB × 2.0 = 80 free points. Elite speed is pure scoring in this format.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Recaptures 50+ SB with BA holding at .265 — one of the most unique profiles in baseball.</div>
+          <div class="risk"><strong>RISK</strong> K% improvement stalls; HR drops further; SB total constrained by manager conservative approach.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $28</span>
+        <span class="value-infl">Infl. Value: ~$41</span>
+      </div>
+    </div>
+
+    <!-- SS4: Trea Turner -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">4</div>
+        <div>
+          <div class="player-name">Trea Turner</div>
+          <div class="player-team">Philadelphia Phillies &bull; SS</div>
+        </div>
+        <div class="player-age">Age 33</div>
+        <span class="archetype arch-speed">SPEED + CONTACT</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>153</td><td>16</td><td>92</td><td>72</td><td>26</td><td>.288</td><td>.348</td><td>.428</td></tr>
+          <tr><td>2025</td><td>148</td><td>20</td><td>96</td><td>72</td><td>28</td><td>.300</td><td>.360</td><td>.455</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>18</td><td>96</td><td>70</td><td>26</td><td>.285</td><td>.348</td><td>.438</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">BA 2025: <span>.300 — elite</span></div>
+        <div class="sv-chip">Power: <span>Declining (16→20→18 proj)</span></div>
+        <div class="sv-chip">Phillies: <span>Premium lineup = R/RBI boost</span></div>
+        <div class="sv-chip">Speed: <span>Still top-tier</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>BA elite, power fading:</strong> Hit .300 in 2025 but power has declined to 18–20 HR range. Profile shifting toward contact/speed over power.</li>
+          <li><strong>Phillies premium:</strong> Batting in one of the best lineups in baseball inflates R/RBI well above what Turner's individual skills would produce elsewhere.</li>
+          <li><strong>Points format:</strong> High BA, good SB, low K rate — efficient scorer. Not elite, but consistent top-5 SS value.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> .305 BA, 30 SB, 100R in that Phillies lineup — elite run scorer.</div>
+          <div class="risk"><strong>RISK</strong> Power continues to erode. Age (33) limits speed longevity. RBI dependent on lineup.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $24</span>
+        <span class="value-infl">Infl. Value: ~$35</span>
+      </div>
+    </div>
+
+    <!-- SS5: Francisco Lindor -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">5</div>
+        <div>
+          <div class="player-name">Francisco Lindor</div>
+          <div class="player-team">New York Mets &bull; SS</div>
+        </div>
+        <div class="player-age">Age 32</div>
+        <span class="archetype arch-steady">STEADY EDDIE</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>158</td><td>33</td><td>106</td><td>88</td><td>26</td><td>.273</td><td>.358</td><td>.506</td></tr>
+          <tr><td>2025</td><td>148</td><td>30</td><td>100</td><td>84</td><td>24</td><td>.258</td><td>.338</td><td>.480</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>152</td><td>29</td><td>104</td><td>81</td><td>24</td><td>.256</td><td>.335</td><td>.472</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Injury: <span>Hamate bone — may impact early power</span></div>
+        <div class="sv-chip">Mets lineup: <span>Loaded (Soto, Bichette, Alvarez)</span></div>
+        <div class="sv-chip">Consistency: <span>3 straight 30-30 seasons (pre-2025)</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Three straight 30-30 seasons:</strong> Lindor's multi-year track record of HR + SB production is elite. One injury dip doesn't change the profile.</li>
+          <li><strong>Mets lineup 2026:</strong> With Soto, Bichette, Alvarez — this could be the best lineup Lindor has ever batted in. R/RBI totals could reach career highs.</li>
+          <li><strong>Hamate concern:</strong> Watch early-season power metrics. Hamate injuries can linger and suppress power for 3–6 months post-surgery.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Hamate fully healed: 33 HR, 26 SB, 108R in that Mets lineup — elite season in elite context.</div>
+          <div class="risk"><strong>RISK</strong> Hamate issue suppresses power all season. BA at .256 struggles further. Age 32 = prime exit year.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $26</span>
+        <span class="value-infl">Infl. Value: ~$38</span>
+      </div>
+    </div>
+
+    <!-- SS6: Zach Neto -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">6</div>
+        <div>
+          <div class="player-name">Zach Neto</div>
+          <div class="player-team">Los Angeles Angels &bull; SS</div>
+        </div>
+        <div class="player-age">Age 25</div>
+        <span class="archetype arch-boom">BOOM/BUST</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>108</td><td>14</td><td>58</td><td>52</td><td>18</td><td>.236</td><td>.316</td><td>.404</td></tr>
+          <tr><td>2025</td><td>148</td><td>28</td><td>88</td><td>78</td><td>22</td><td>.258</td><td>.332</td><td>.488</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>26</td><td>88</td><td>78</td><td>22</td><td>.255</td><td>.328</td><td>.472</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Breakout 2025: <span>Swing decisions massively improved</span></div>
+        <div class="sv-chip">HR: <span>14→28 jump validated by Statcast</span></div>
+        <div class="sv-chip">Angels: <span>Weak lineup limits counting</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Legit 2025 breakout:</strong> 28 HR with improved swing decisions — not just a fluke. Swing mechanics changes were real and measurable.</li>
+          <li><strong>Angels context hurts:</strong> Batting in one of MLB's weakest lineups suppresses R/RBI. Could add 20+ counting stats on a better team.</li>
+          <li><strong>Speed + power combo:</strong> 22 SB + 26 HR is top-10 SS production regardless of context.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 30 HR, 25 SB — underpriced given breakout; top-3 SS if Angels lineup improves.</div>
+          <div class="risk"><strong>RISK</strong> Angels context caps counting stats. Sophomore adjustment after breakout. BA hangs at .255.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $26</span>
+        <span class="value-infl">Infl. Value: ~$38</span>
+      </div>
+    </div>
+
+  </div><!-- end player-grid -->
+
+  <div class="tier-subhead">SS Ranks 7–20</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">7</div><div class="brief-content"><div class="brief-name">Mookie Betts — LAD</div><div class="brief-proj">Proj: 21 HR, 89R, 80 RBI, 11 SB, .265 | Multi-pos; Dodgers; power trending down</div><div class="brief-val">~$31 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">8</div><div class="brief-content"><div class="brief-name">CJ Abrams — WAS</div><div class="brief-proj">Proj: 23 HR, 87R, 77 RBI, 30 SB, .260 | Young upside; Nationals weak lineup</div><div class="brief-val">~$26 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">9</div><div class="brief-content"><div class="brief-name">Bo Bichette — NYM</div><div class="brief-proj">Proj: 18 HR, 82R, 72 RBI, .310 | Elite BA; Mets lineup; 3B eligible too</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">10</div><div class="brief-content"><div class="brief-name">Corey Seager — TEX</div><div class="brief-proj">Proj: 28 HR, 84R, 86 RBI, .275 | Power at SS; Rangers context; injury history</div><div class="brief-val">~$29 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">11</div><div class="brief-content"><div class="brief-name">Geraldo Perdomo — ARI</div><div class="brief-proj">Proj: 14 HR, 96R, 71 RBI, 21 SB, .274 | Run scorer; breakout sustainability questions</div><div class="brief-val">~$21 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">12</div><div class="brief-content"><div class="brief-name">Jeremy Peña — HOU</div><div class="brief-proj">Proj: 18 HR, 82R, 72 RBI, 14 SB, .268 | Astros premium; solid all-around</div><div class="brief-val">~$22 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">13</div><div class="brief-content"><div class="brief-name">Willy Adames — SF</div><div class="brief-proj">Proj: 22 HR, 76R, 82 RBI, 10 SB, .250 | Power at SS; Giants context adequate</div><div class="brief-val">~$22 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">14</div><div class="brief-content"><div class="brief-name">Dansby Swanson — CHC</div><div class="brief-proj">Proj: 18 HR, 75R, 72 RBI, 10 SB, .252 | YOUR KEEPER @ $12; borderline surplus</div><div class="brief-val">~$21 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">15</div><div class="brief-content"><div class="brief-name">Ezequiel Tovar — COL</div><div class="brief-proj">Proj: 16 HR, 70R, 68 RBI, 12 SB, .268 | YOUR KEEPER @ $2; excellent surplus; Coors boost</div><div class="brief-val">~$22 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">16</div><div class="brief-content"><div class="brief-name">Bryson Stott — PHI</div><div class="brief-proj">Proj: 14 HR, 76R, 66 RBI, 14 SB, .268 | Phillies lineup context; speed asset</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">17</div><div class="brief-content"><div class="brief-name">Ha-Seong Kim — SD</div><div class="brief-proj">Proj: 14 HR, 72R, 62 RBI, 18 SB, .265 | Multi-pos; versatile; value at right price</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">18</div><div class="brief-content"><div class="brief-name">Jacob Wilson — OAK</div><div class="brief-proj">Proj: 12 HR, 62R, 58 RBI, 10 SB, .275 | High-contact young SS; developing power</div><div class="brief-val">~$15 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">19</div><div class="brief-content"><div class="brief-name">Xander Bogaerts — SD</div><div class="brief-proj">Proj: 14 HR, 65R, 66 RBI, .258 | Aging; Petco suppresses power; depth</div><div class="brief-val">~$12 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">20</div><div class="brief-content"><div class="brief-name">Luis García Jr. — HOU</div><div class="brief-proj">Proj: 12 HR, 68R, 62 RBI, 14 SB, .260 | YOUR KEEPER @ $1; excellent value; multi-pos</div><div class="brief-val">~$15 infl.</div></div></div>
+  </div>
+
+  <div class="tier-subhead">SS Ranks 21–30 — Depth</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">21</div><div class="brief-content"><div class="brief-name">Xavier Edwards — MIA</div><div class="brief-proj">8 HR, .278, 20 SB; speed/contact; weak lineup</div><div class="brief-val">~$10 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">22</div><div class="brief-content"><div class="brief-name">Trevor Story — various</div><div class="brief-proj">12 HR, .252, 12 SB; injury history; needs health</div><div class="brief-val">~$10 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">23</div><div class="brief-content"><div class="brief-name">JP Crawford — SEA</div><div class="brief-proj">8 HR, .252, elite BB%; low ceiling</div><div class="brief-val">~$8 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">24</div><div class="brief-content"><div class="brief-name">Esteury Ruiz — OAK</div><div class="brief-proj">5 HR, .248, 30+ SB potential; fringe bat</div><div class="brief-val">~$10 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">25-30</div><div class="brief-content"><div class="brief-name">Orlando Arcia / depth</div><div class="brief-proj">Streaming only — waiver wire targets</div><div class="brief-val">~$1-5 infl.</div></div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════ OUTFIELD ═══ -->
+<section class="pos-section" id="outfield">
+  <div class="pos-header">
+    <span class="pos-badge">OF</span>
+    <h2>Outfielders — Top 30</h2>
+    <span class="pos-depth depth-deep">Depth: VERY DEEP — Let others overpay at top; elite mid-tier value</span>
+  </div>
+  <p style="color:var(--muted);margin-bottom:1rem;font-size:.85rem;">You already own Acuña ($37), Langford ($18), Harris ($15), Reynolds ($14), Ward ($4), Carpenter ($2) as OF keepers. You're fully stocked. Use this section for context on auction value and trade leverage — not as buying guides.</p>
+
+  <div class="player-grid">
+
+    <!-- OF1: Aaron Judge -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">1</div>
+        <div>
+          <div class="player-name">Aaron Judge</div>
+          <div class="player-team">New York Yankees &bull; RF</div>
+        </div>
+        <div class="player-age">Age 34</div>
+        <span class="archetype arch-power">POWER BAT</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>158</td><td>58</td><td>122</td><td>144</td><td>10</td><td>.322</td><td>.458</td><td>.701</td></tr>
+          <tr><td>2025</td><td>152</td><td>53</td><td>137</td><td>136</td><td>12</td><td>.331</td><td>.448</td><td>.688</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>45</td><td>118</td><td>122</td><td>10</td><td>.312</td><td>.428</td><td>.640</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Barrel%: <span>~24% (elite)</span></div>
+        <div class="sv-chip">Exit Velo: <span>~96 mph</span></div>
+        <div class="sv-chip">BB%: <span>~18% (exceptional)</span></div>
+        <div class="sv-chip">OPS 2025: <span>1.136</span></div>
+        <div class="sv-chip">K%: <span>~27% — only weakness</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Generational power with elite OBP:</strong> .458 OBP in 2024 — unprecedented for a power hitter. Even with K% drag in points format, BB rate (18%) generates enormous free points.</li>
+          <li><strong>Age 34 regression built in:</strong> Projecting 45 HR in 2026 is a meaningful drop from 53–58 range but still the highest single-player power projection in baseball.</li>
+          <li><strong>Points format calculation:</strong> 18% BB in ~650 PA = ~117 walks × 1.0 = 117 pts from walks alone. Add 45 HR × 5.3 = 239 pts. Judge generates points from two categories few others even score in.</li>
+          <li><strong>Yankee lineup:</strong> Rice, Soto, Chisholm, Bellinger around him — maximum RBI opportunities.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Defies age regression: 50+ HR, 1.100+ OPS — #1 overall fantasy player for another year.</div>
+          <div class="risk"><strong>RISK</strong> Age (34) + high K% (27%) = significant AB + K penalty drag in points. Power decline could be steep if athleticism drops.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $45</span>
+        <span class="value-infl">Infl. Value: ~$66</span>
+        <span class="points-note">BB rate = extraordinary bonus in this scoring format</span>
+      </div>
+    </div>
+
+    <!-- OF2: Juan Soto -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">2</div>
+        <div>
+          <div class="player-name">Juan Soto</div>
+          <div class="player-team">New York Mets &bull; RF</div>
+        </div>
+        <div class="player-age">Age 27</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</span></th></tr>
+          <tr><td>2024</td><td>157</td><td>41</td><td>128</td><td>109</td><td>8</td><td>.288</td><td>.419</td><td>.569</td></tr>
+          <tr><td>2025</td><td>154</td><td>43</td><td>122</td><td>112</td><td>38</td><td>.263</td><td>.402</td><td>.558</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>152</td><td>38</td><td>115</td><td>108</td><td>30</td><td>.270</td><td>.408</td><td>.540</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">OBP 2025: <span>.402 (elite)</span></div>
+        <div class="sv-chip">BB%: <span>~18%</span></div>
+        <div class="sv-chip">SB 2025: <span>38 (new elite category)</span></div>
+        <div class="sv-chip">xwOBA: <span>Elite (.400+)</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Added elite SB to elite HR + OBP:</strong> 38 SB in 2025 transformed Soto from great to historically great. 43 HR + 38 SB is almost unprecedented.</li>
+          <li><strong>Points format explosion:</strong> 18% BB rate + 38 SB + 43 HR — three distinct point-generating pillars. In this scoring system, Soto may be the most valuable player overall.</li>
+          <li><strong>Age 27 — prime window:</strong> Still ascending. This could be Soto's best fantasy season yet in 2026.</li>
+          <li><strong>Mets lineup:</strong> Lindor, Bichette, Alvarez — premiere protection in both lineup context and production floor.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 45 HR, 35 SB, .410 OBP — arguably the best fantasy player in baseball in a points format. Historic profile.</div>
+          <div class="risk"><strong>RISK</strong> BA (.263 in 2025) could be a concern. SB may regress to 20–25 as novelty wears off and pitchers hold runners more.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $42</span>
+        <span class="value-infl">Infl. Value: ~$62</span>
+        <span class="points-note">May be #1 overall in points format due to BB + SB + HR stacking</span>
+      </div>
+    </div>
+
+    <!-- OF3: Ronald Acuna Jr. -->
+    <div class="player-card tier1">
+      <div class="card-header">
+        <div class="rank-num">3</div>
+        <div>
+          <div class="player-name">Ronald Acuña Jr.</div>
+          <div class="player-team">Atlanta Braves &bull; RF</div>
+        </div>
+        <div class="player-age">Age 28</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>58</td><td>8</td><td>30</td><td>28</td><td>11</td><td>.281</td><td>.382</td><td>.462</td></tr>
+          <tr><td>2025</td><td>128</td><td>21</td><td>72</td><td>66</td><td>23</td><td>.290</td><td>.388</td><td>.502</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>30</td><td>90</td><td>90</td><td>25</td><td>.290</td><td>.385</td><td>.530</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">ACL: <span>Nearly 2 years post-surgery</span></div>
+        <div class="sv-chip">Sprint Speed: <span>Monitoring for full recovery</span></div>
+        <div class="sv-chip">BB%: <span>~13% (elite)</span></div>
+        <div class="sv-chip">Peak: <span>73 SB / 41 HR in 2023</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Full spring training expected:</strong> Nearly two years post-ACL — if he passes spring with no issues, he's back to full production mode.</li>
+          <li><strong>YOUR KEEPER @ $37:</strong> With inflation-adjusted market value of ~$56, you're holding a $19 surplus on the best player in baseball when healthy.</li>
+          <li><strong>Pre-injury peak:</strong> 73 SB, 41 HR, .337 BA in 2023 is the ceiling. Realistic 2026 target is 25–30 SB, 28–32 HR, .290 BA.</li>
+          <li><strong>Only risk is durability:</strong> Has played 77%+ of games in only 2 of 8 seasons. Knee wear-and-tear over 150 games is the unknown variable.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Fully healthy 150-game season: 35 HR, 35 SB, .295 BA — potential #1 overall player in baseball and fantasy.</div>
+          <div class="risk"><strong>RISK</strong> Third injury-shortened season in a row. Knee limits sprint speed permanently. 120-game seasons become the new normal.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $38</span>
+        <span class="value-infl">Infl. Value: ~$56</span>
+        <span class="points-note">YOUR KEEPER @ $37 — one of your best keeper values</span>
+      </div>
+    </div>
+
+    <!-- OF4: Corbin Carroll -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">4</div>
+        <div>
+          <div class="player-name">Corbin Carroll</div>
+          <div class="player-team">Arizona Diamondbacks &bull; CF</div>
+        </div>
+        <div class="player-age">Age 25</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>143</td><td>18</td><td>82</td><td>62</td><td>28</td><td>.239</td><td>.320</td><td>.408</td></tr>
+          <tr><td>2025</td><td>148</td><td>31</td><td>94</td><td>82</td><td>32</td><td>.259</td><td>.338</td><td>.488</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>28</td><td>90</td><td>78</td><td>30</td><td>.252</td><td>.328</td><td>.462</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Speed: <span>Elite sprint speed</span></div>
+        <div class="sv-chip">Power: <span>31 HR in 2025 — real breakout</span></div>
+        <div class="sv-chip">BA: <span>Modest .252 projection</span></div>
+        <div class="sv-chip">Age: <span>25 — ascending</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>30/30 at 25:</strong> Bounced back from a frustrating 2024 with a genuine 30/30 season — elite combination for points scoring.</li>
+          <li><strong>BA is the limiting factor:</strong> .239–.259 range limits per-PA efficiency. Points format partially offsets by awarding SB free points.</li>
+          <li><strong>Long-term asset:</strong> At 25 with athletic profile, Carroll could develop into a 35 HR / 35 SB player over the next 2–3 seasons.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 35 HR, 38 SB — joins elite tier of five-tool OFs at his age. Top-5 overall fantasy player potential.</div>
+          <div class="risk"><strong>RISK</strong> BA sinks below .240; power regresses toward 2024 levels; K% limits PA efficiency in points format.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $30</span>
+        <span class="value-infl">Infl. Value: ~$44</span>
+      </div>
+    </div>
+
+    <!-- OF5: Julio Rodriguez -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">5</div>
+        <div>
+          <div class="player-name">Julio Rodríguez</div>
+          <div class="player-team">Seattle Mariners &bull; CF</div>
+        </div>
+        <div class="player-age">Age 25</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>148</td><td>25</td><td>86</td><td>76</td><td>18</td><td>.265</td><td>.332</td><td>.442</td></tr>
+          <tr><td>2025</td><td>152</td><td>32</td><td>96</td><td>88</td><td>30</td><td>.267</td><td>.340</td><td>.488</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>152</td><td>30</td><td>94</td><td>84</td><td>28</td><td>.265</td><td>.335</td><td>.478</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">30/30: <span>Two seasons consecutively</span></div>
+        <div class="sv-chip">Age: <span>25 — prime ceiling ahead</span></div>
+        <div class="sv-chip">Mariners: <span>Raleigh + Rodriguez core</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Two straight 30/30 seasons:</strong> Only elite players sustain this combination. Rodriguez is proving 2023 was not a fluke.</li>
+          <li><strong>Peak age approaching:</strong> At 25, his ceiling hasn't been reached. Could develop into a 35/35 threat within two seasons.</li>
+          <li><strong>Mariners context:</strong> Cal Raleigh's presence provides some lineup protection; adequate but not premium.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 35 HR, 35 SB — joins top tier of fantasy OFs. Age is on his side for continued development.</div>
+          <div class="risk"><strong>RISK</strong> BA (.265) with modest OBP limits per-PA efficiency. Mariners lineup limits counting stat ceiling.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $30</span>
+        <span class="value-infl">Infl. Value: ~$44</span>
+      </div>
+    </div>
+
+    <!-- OF6: Jackson Chourio -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">6</div>
+        <div>
+          <div class="player-name">Jackson Chourio</div>
+          <div class="player-team">Milwaukee Brewers &bull; LF</div>
+        </div>
+        <div class="player-age">Age 22</div>
+        <span class="archetype arch-five">FIVE-TOOL</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>144</td><td>17</td><td>78</td><td>62</td><td>21</td><td>.241</td><td>.288</td><td>.388</td></tr>
+          <tr><td>2025</td><td>148</td><td>21</td><td>82</td><td>70</td><td>21</td><td>.270</td><td>.320</td><td>.440</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>24</td><td>86</td><td>76</td><td>22</td><td>.265</td><td>.318</td><td>.448</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Age: <span>22 — most upside of any OF</span></div>
+        <div class="sv-chip">20/20: <span>2 straight seasons</span></div>
+        <div class="sv-chip">Floor: <span>Better than PCA per analysts</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Two 20/20 seasons at age 22:</strong> When healthy players produce two 20/20 seasons this young, the ceiling is extraordinary.</li>
+          <li><strong>BA improving:</strong> .241 → .270 trajectory — if contact gains hold, Chourio becomes the most dangerous young OF in baseball.</li>
+          <li><strong>Conservative 2026 target:</strong> 24 HR, 22 SB, .265 BA. But age-based ceiling: 35 HR, 30 SB by age 24–25.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Highest ceiling of any player ranked 6–20 in OF. 30/30 at 22 would be historic.</div>
+          <div class="risk"><strong>RISK</strong> BA falls back to .241 range; approach issues limit power development; Brewers weak lineup.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $24</span>
+        <span class="value-infl">Infl. Value: ~$35</span>
+      </div>
+    </div>
+
+    <!-- OF7: Pete Crow-Armstrong -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">7</div>
+        <div>
+          <div class="player-name">Pete Crow-Armstrong</div>
+          <div class="player-team">Chicago Cubs &bull; CF</div>
+        </div>
+        <div class="player-age">Age 23</div>
+        <span class="archetype arch-boom">BOOM/BUST</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>118</td><td>14</td><td>68</td><td>52</td><td>26</td><td>.225</td><td>.288</td><td>.388</td></tr>
+          <tr><td>2025</td><td>148</td><td>31</td><td>88</td><td>80</td><td>35</td><td>.247</td><td>.302</td><td>.472</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>148</td><td>26</td><td>84</td><td>76</td><td>32</td><td>.242</td><td>.298</td><td>.448</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">H2 2025: <span>.216 BA, .634 OPS</span></div>
+        <div class="sv-chip">vs LHP: <span>.594 OPS (55 K / 5 BB)</span></div>
+        <div class="sv-chip">Speed: <span>Elite sprint speed</span></div>
+        <div class="sv-chip">Patience: <span>One of least patient hitters in MLB</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>First half was elite; second half exposed:</strong> .634 OPS after the All-Star break with a brutal 55/5 K/BB ratio vs. lefties — pitchers identified the hole.</li>
+          <li><strong>Platoon risk is real:</strong> If managers platoon him against lefties, counting stats collapse. 35 SB potential is only realized in near-full-time role.</li>
+          <li><strong>Points format penalty for approach:</strong> Lowest patience score among top OFs — AB penalty + K penalty compounds. The K/BB issue directly hurts this scoring system.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> Fixes LHP approach: 33 HR, 38 SB, full-time — one of the most exciting players in baseball.</div>
+          <div class="risk"><strong>RISK</strong> Platoon exposure → 450 PA season. K%/approach issues compound in points format. Busted bust risk at high ADP.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $24</span>
+        <span class="value-infl">Infl. Value: ~$35</span>
+        <span class="points-note">K% / approach issues reduce points value vs. roto</span>
+      </div>
+    </div>
+
+    <!-- OF8: Wyatt Langford -->
+    <div class="player-card">
+      <div class="card-header">
+        <div class="rank-num">8</div>
+        <div>
+          <div class="player-name">Wyatt Langford</div>
+          <div class="player-team">Texas Rangers &bull; OF</div>
+        </div>
+        <div class="player-age">Age 24</div>
+        <span class="archetype arch-steady">STEADY EDDIE</span>
+      </div>
+      <div class="stat-wrap">
+        <table class="stats">
+          <tr><th>Year</th><th>G</th><th>HR</th><th>R</th><th>RBI</th><th>SB</th><th>AVG</th><th>OBP</th><th>SLG</th></tr>
+          <tr><td>2024</td><td>138</td><td>16</td><td>78</td><td>62</td><td>16</td><td>.248</td><td>.320</td><td>.408</td></tr>
+          <tr><td>2025</td><td>148</td><td>22</td><td>84</td><td>76</td><td>22</td><td>.241</td><td>.318</td><td>.430</td></tr>
+          <tr class="proj"><td>2026 Proj</td><td>150</td><td>24</td><td>88</td><td>80</td><td>22</td><td>.248</td><td>.322</td><td>.448</td></tr>
+        </table>
+      </div>
+      <div class="savant-row">
+        <div class="sv-chip">Profile: <span>"Just a damn good baseball player"</span></div>
+        <div class="sv-chip">Age: <span>24 — still developing</span></div>
+        <div class="sv-chip">20/20: <span>Floor expectation</span></div>
+        <div class="sv-chip">ADP: <span>Top-50 range</span></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li><strong>YOUR KEEPER @ $18:</strong> Langford at $18 with ~$35 infl. value = $17 surplus. Keep and enjoy the discount.</li>
+          <li><strong>Balanced production:</strong> 20/20 across HR/SB with adequate BA — no elite category but no weakness either. Ideal fantasy profile.</li>
+          <li><strong>Growth ceiling:</strong> At 24, hasn't tapped his ceiling. 28 HR / 28 SB by age 26 is a realistic trajectory.</li>
+        </ul>
+        <div class="up-risk">
+          <div class="upside"><strong>UPSIDE</strong> 28 HR, 28 SB, .258 BA — top-10 OF in fantasy by age 26.</div>
+          <div class="risk"><strong>RISK</strong> BA (.241) limits scoring efficiency per PA. Rangers lineup context is adequate but not premium.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="value-base">Base Value: $26</span>
+        <span class="value-infl">Infl. Value: ~$38</span>
+        <span class="points-note">YOUR KEEPER @ $18 — strong surplus</span>
+      </div>
+    </div>
+
+  </div><!-- end player-grid -->
+
+  <div class="tier-subhead">OF Ranks 9–20</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">9</div><div class="brief-content"><div class="brief-name">Yordan Alvarez — HOU</div><div class="brief-proj">2025: .273, 6 HR (injury). Proj 2026: 30 HR, 90 RBI if healthy. Elite talent, injury is the only question.</div><div class="brief-val">~$32 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">10</div><div class="brief-content"><div class="brief-name">James Wood — WAS</div><div class="brief-proj">2025: 31 HR, 15 SB, led NL in Ks (211). Proj: 28 HR, 15 SB, .258. K rate is the points drag.</div><div class="brief-val">~$32 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">11</div><div class="brief-content"><div class="brief-name">Fernando Tatis Jr. — SD</div><div class="brief-proj">2025: 25 HR, 32 SB, .268. Proj: 26 HR, 30 SB, .265. Speed/power; Petco suppresses HR.</div><div class="brief-val">~$38 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">12</div><div class="brief-content"><div class="brief-name">Kyle Tucker — LAD</div><div class="brief-proj">2025: 22 HR, 25 SB, .266. Dodgers context. Proj: 24 HR, 22 SB, .270. Steady Eddie.</div><div class="brief-val">~$35 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">13</div><div class="brief-content"><div class="brief-name">Riley Greene — DET</div><div class="brief-proj">2025: 36 HR, .258. Proj: 30 HR, .262. Big power; high K%; Tigers improving lineup.</div><div class="brief-val">~$26 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">14</div><div class="brief-content"><div class="brief-name">Byron Buxton — MIN</div><div class="brief-proj">2025: 35 HR, 24 SB, .264 — health breakthrough. Proj: 28 HR, 20 SB. Risk/reward play.</div><div class="brief-val">~$26 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">15</div><div class="brief-content"><div class="brief-name">Michael Harris II — ATL</div><div class="brief-proj">2025: 20 HR, 20 SB, .249. Proj: 22 HR, 22 SB, .255. YOUR KEEPER @ $15. Good surplus.</div><div class="brief-val">~$29 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">16</div><div class="brief-content"><div class="brief-name">Brent Rooker — OAK</div><div class="brief-proj">2025: 30 HR, .262. Proj: 26 HR, .255. Power-first; Sacramento park helps; weak lineup.</div><div class="brief-val">~$26 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">17</div><div class="brief-content"><div class="brief-name">Jarren Duran — BOS</div><div class="brief-proj">2025: 16 HR, 24 SB, .256. Proj: 18 HR, 22 SB, .258. Red Sox context; solid speed/contact.</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">18</div><div class="brief-content"><div class="brief-name">Oneil Cruz — PIT</div><div class="brief-proj">2025: 20 HR, 38 SB, .200 BA. K rate (32%) kills BA and points efficiency. Boom or bust.</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">19</div><div class="brief-content"><div class="brief-name">Bryan Reynolds — PIT</div><div class="brief-proj">YOUR KEEPER @ $14. Proj: 22 HR, 12 SB, .272. Elite contact; low K%; solid E+ year.</div><div class="brief-val">~$29 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">20</div><div class="brief-content"><div class="brief-name">Roman Anthony — BOS</div><div class="brief-proj">2025 debut: .292, 8 HR. Proj 2026: 16 HR, .282. Red Sox top prospect showing promise.</div><div class="brief-val">~$18 infl.</div></div></div>
+  </div>
+
+  <div class="tier-subhead">OF Ranks 21–30</div>
+  <div class="tier-list">
+    <div class="brief-card"><div class="brief-rank">21</div><div class="brief-content"><div class="brief-name">Randy Arozarena — SEA</div><div class="brief-proj">2025: 27 HR, 31 SB, .238. Proj: 24 HR, 28 SB. Consistent 4-category producer.</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">22</div><div class="brief-content"><div class="brief-name">George Springer — TOR</div><div class="brief-proj">2025: 32 HR, 18 SB, .309. Age 36 rebound season. Proj: 24 HR, 14 SB. Age risk real.</div><div class="brief-val">~$22 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">23</div><div class="brief-content"><div class="brief-name">Christian Yelich — MIL</div><div class="brief-proj">2025: 29 HR, 16 SB, .264. Proj: 24 HR, 14 SB, .262. Power back; durability question.</div><div class="brief-val">~$22 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">24</div><div class="brief-content"><div class="brief-name">Andy Pages — LAD</div><div class="brief-proj">2025: 27 HR, 14 SB, .272. Proj: 24 HR, 12 SB. Dodgers context. Young upside.</div><div class="brief-val">~$21 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">25</div><div class="brief-content"><div class="brief-name">Kyle Stowers — MIA</div><div class="brief-proj">2025: 25 HR, .288. Proj: 22 HR, .268. Breakout BA unsustainable. Power real.</div><div class="brief-val">~$19 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">26</div><div class="brief-content"><div class="brief-name">Cody Bellinger — NYY</div><div class="brief-proj">2025: 29 HR, 13 SB, .272. Multi-pos (OF/1B). Yankees context. Steady producer.</div><div class="brief-val">~$24 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">27</div><div class="brief-content"><div class="brief-name">Seiya Suzuki — CHC</div><div class="brief-proj">Proj: 22 HR, 6 SB, .272. Elite plate discipline; Cubs context; health dependent.</div><div class="brief-val">~$21 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">28</div><div class="brief-content"><div class="brief-name">Tyler Soderstrom — OAK</div><div class="brief-proj">2025: 25 HR, .276. Proj: 22 HR, .265. Strong contact hitter; limited speed; developing.</div><div class="brief-val">~$21 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">29</div><div class="brief-content"><div class="brief-name">Brandon Nimmo — NYM</div><div class="brief-proj">2025: 25 HR, 13 SB, .262. High floor; Mets lineup boosts R/RBI. Safe pick.</div><div class="brief-val">~$18 infl.</div></div></div>
+    <div class="brief-card"><div class="brief-rank">30</div><div class="brief-content"><div class="brief-name">Kerry Carpenter — DET</div><div class="brief-proj">YOUR KEEPER @ $2. Proj: 24 HR, .265. Excellent surplus. Tigers lineup improving.</div><div class="brief-val">~$15 infl.</div></div></div>
+  </div>
+
+</section>
+
+</main>
+
+<footer style="text-align:center;color:var(--muted);font-size:.78rem;padding:2rem;border-top:1px solid var(--border);">
+  <p>2026 Fantasy Baseball Research Report — Part 2B: Hitters (3B, SS, OF)</p>
+  <p style="margin-top:.4rem">Data: NBC Sports, Just Baseball, Razzball, FanGraphs, Baseball Savant, FantasyPros, CBS Sports (March 2026). Values ~47% inflation-adjusted. Verify Statcast at baseballsavant.mlb.com.</p>
+  <p style="margin-top:.4rem">
+    <a href="report-part2a-hitters-C-1B-2B.html" style="color:var(--accent)">← Part 2A: C/1B/2B</a> &nbsp;|&nbsp;
+    <a href="report-part1.html" style="color:var(--accent)">Part 1: League Analysis</a> &nbsp;|&nbsp;
+    <a href="report-part3-pitchers.html" style="color:var(--accent)">→ Part 3: Pitcher Profiles</a>
+  </p>
+</footer>
+</body>
+</html>
