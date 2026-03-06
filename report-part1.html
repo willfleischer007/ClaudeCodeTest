@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Fantasy Baseball Research Report — Part 1: League Analysis & Keeper Decisions</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3347;
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --accent: #4f9cf9;
+    --accent2: #7c5cbf;
+    --green: #22c55e;
+    --green-bg: #052e16;
+    --yellow: #f59e0b;
+    --yellow-bg: #2d1e02;
+    --red: #ef4444;
+    --red-bg: #2d0a0a;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+  }
+  header {
+    background: linear-gradient(135deg, #1e2a4a 0%, #2d1b4e 100%);
+    padding: 2.5rem 2rem;
+    border-bottom: 2px solid var(--accent2);
+    text-align: center;
+  }
+  header h1 { font-size: 2.1rem; color: var(--gold); font-weight: 700; letter-spacing: -0.5px; }
+  header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem; }
+  .badge {
+    display: inline-block; background: var(--accent2); color: #fff;
+    font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem;
+    border-radius: 99px; letter-spacing: 0.5px; margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem 2rem;
+    max-width: 880px;
+    margin: 2rem auto;
+  }
+  .toc h2 { color: var(--accent); font-size: 1.1rem; margin-bottom: 1rem; }
+  .toc ol { padding-left: 1.4rem; }
+  .toc li { margin: 0.4rem 0; }
+  .toc a { color: var(--text-muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+
+  main { max-width: 980px; margin: 0 auto; padding: 1rem 2rem 4rem; }
+
+  section { margin-bottom: 3.5rem; }
+  h2.section-title {
+    font-size: 1.5rem;
+    color: var(--gold);
+    border-bottom: 2px solid var(--accent2);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    scroll-margin-top: 80px;
+  }
+  h3 { color: var(--accent); font-size: 1.1rem; margin: 1.5rem 0 0.75rem; }
+  p { color: var(--text); margin-bottom: 0.85rem; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 1rem 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:hover td { background: rgba(79,156,249,0.05); }
+
+  .keep { color: var(--green); font-weight: 700; }
+  .drop { color: var(--red); font-weight: 700; }
+  .borderline { color: var(--yellow); font-weight: 700; }
+
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .tag-keep { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+  .tag-drop { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+  .tag-borderline { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow); }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+  }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.danger { border-left-color: var(--red); }
+  .callout.success { border-left-color: var(--green); }
+  .callout-title { font-weight: 700; margin-bottom: 0.3rem; }
+
+  /* Scoring stat highlight */
+  .stat-positive { color: var(--green); }
+  .stat-negative { color: var(--red); }
+  .stat-neutral { color: var(--text-muted); }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .info-card .label { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-card .value { color: var(--gold); font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; }
+  .info-card .sub { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.15rem; }
+
+  /* Tier list */
+  .tier {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    overflow: hidden;
+  }
+  .tier-header {
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .tier-1 .tier-header { background: #3b1f00; color: #f97316; }
+  .tier-2 .tier-header { background: #1a2a1a; color: var(--green); }
+  .tier-3 .tier-header { background: #1a1a2e; color: var(--accent); }
+  .tier-4 .tier-header { background: #2d2d00; color: var(--yellow); }
+  .tier-5 .tier-header { background: #2d0a0a; color: var(--red); }
+  .tier-body { padding: 0.75rem 1rem; font-size: 0.88rem; color: var(--text-muted); }
+
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .surplus-pos { color: var(--green); }
+  .surplus-neg { color: var(--red); }
+  .surplus-zero { color: var(--text-muted); }
+
+  .inflation-box {
+    background: var(--surface);
+    border: 2px solid var(--accent2);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .inflation-box h3 { color: var(--gold); margin-top: 0; }
+  .inflation-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.6rem 0;
+    font-size: 0.9rem;
+  }
+  .step-num {
+    background: var(--accent2);
+    color: #fff;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+  }
+  .formula { font-family: 'Courier New', monospace; color: var(--gold); background: var(--bg); padding: 0.2rem 0.5rem; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>2026 Fantasy Baseball Research Report</h1>
+  <p><strong>Part 1: League Analysis, Scoring Arbitrage, Keeper Decisions &amp; Auction Strategy</strong><br>
+  10-Team H2H Points League &bull; $260 Auction &bull; Generated March 2026</p>
+</header>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#scoring">Scoring System Arbitrage &amp; Point-Value Rankings</a></li>
+    <li><a href="#positional">Positional Scarcity Analysis</a></li>
+    <li><a href="#inflation">Inflation Calculation</a></li>
+    <li><a href="#keepers">Keeper Decision Matrix — Your Roster</a></li>
+    <li><a href="#pitching">Pitching Landscape Analysis</a></li>
+    <li><a href="#strategy">Auction Strategy Framework</a></li>
+  </ol>
+</div>
+
+<main>
+
+<!-- ================================================================ -->
+<!-- SECTION A: SCORING SYSTEM ARBITRAGE -->
+<!-- ================================================================ -->
+<section id="scoring">
+  <h2 class="section-title">A. Scoring System Arbitrage &amp; Point-Value Rankings</h2>
+
+  <p>Your scoring system differs meaningfully from standard 5×5 roto. Understanding where the points concentrate lets you identify player archetypes the market systematically misprices.</p>
+
+  <h3>Batting Weight Table</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Stat</th><th>Points</th><th>Net (per event)</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AB</td><td class="stat-negative">−0.2</td><td class="stat-negative">−0.2</td><td>Every at-bat costs points; plate discipline is monetized</td></tr>
+        <tr><td>Walk (BB)</td><td class="stat-positive">+1.0</td><td class="stat-positive">+1.0 (no AB cost)</td><td>Most efficient non-hit outcome — 1.0 for FREE plate appearance</td></tr>
+        <tr><td>Single (1B)</td><td class="stat-positive">+2.5</td><td class="stat-positive">+2.3 net</td><td>Net after AB: contact pays</td></tr>
+        <tr><td>Double (2B)</td><td class="stat-positive">+3.5</td><td class="stat-positive">+3.3 net</td><td>Strong doubles hitters underrated</td></tr>
+        <tr><td>Triple (3B)</td><td class="stat-positive">+4.5</td><td class="stat-positive">+4.3 net</td><td>Rare but high value</td></tr>
+        <tr><td>Home Run (HR)</td><td class="stat-positive">+5.5</td><td class="stat-positive">+5.3 net</td><td>Plus likely +1.5 RBI; total ~6.8 per solo HR</td></tr>
+        <tr><td>RBI</td><td class="stat-positive">+1.5</td><td class="stat-positive">+1.5</td><td>Stacks with hit events; lineup position matters</td></tr>
+        <tr><td>Run (R)</td><td class="stat-positive">+1.1</td><td class="stat-positive">+1.1</td><td>Leadoff/top-of-order premium</td></tr>
+        <tr><td>Stolen Base (SB)</td><td class="stat-positive">+2.0</td><td class="stat-positive">+2.0</td><td>Highly efficient — no AB cost, pure upside</td></tr>
+        <tr><td>Caught Stealing (CS)</td><td class="stat-negative">−0.5</td><td class="stat-negative">−0.5</td><td>High success-rate runners break even easily</td></tr>
+        <tr><td>Strikeout (K)</td><td class="stat-negative">−0.5</td><td class="stat-negative">−0.7 net</td><td>AB cost (−0.2) + K (−0.5) = worst regular PA outcome</td></tr>
+        <tr><td>GIDP</td><td class="stat-negative">−1.0</td><td class="stat-negative">−1.2 net</td><td>Catastrophic per-event — avoid slow pull hitters</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Pitching Weight Table</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Stat</th><th>Points</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Inning Pitched (IP)</td><td class="stat-positive">+3.0</td><td>Per inning — workhorse durability is a top-line value driver</td></tr>
+        <tr><td>Strikeout (K)</td><td class="stat-positive">+1.6</td><td>Above average for points formats; K-heavy arms get a premium</td></tr>
+        <tr><td>Win (W)</td><td class="stat-positive">+5.0</td><td>Still significant — pitchers on contenders gain systemic value</td></tr>
+        <tr><td>Save (SV)</td><td class="stat-positive">+7.2</td><td>ELITE premium — highest per-event value in the scoring system</td></tr>
+        <tr><td>Hold (HD)</td><td class="stat-positive">+4.5</td><td>Severely underpriced relative to traditional leagues — 4.5 pts per hold</td></tr>
+        <tr><td>Quality Start (QS)</td><td class="stat-positive">+1.5</td><td>Bonus for ≥6 IP &amp; ≤3 ER; incentivizes deep starts</td></tr>
+        <tr><td>Walk (BB)</td><td class="stat-negative">−1.5</td><td>Heavy penalty — control pitchers have edge</td></tr>
+        <tr><td>Earned Run (ER)</td><td class="stat-negative">−1.3</td><td>Standard penalty; ERA matters</td></tr>
+        <tr><td>Hit Allowed (H)</td><td class="stat-negative">−0.8</td><td>Rewards strikeout/fly-ball suppression</td></tr>
+        <tr><td>Loss (L)</td><td class="stat-negative">−3.0</td><td>Significant — bad-team starters punished doubly</td></tr>
+        <tr><td>Blown Save (BS)</td><td class="stat-negative">−3.0</td><td>Devastating for shaky closers — committee situations are brutal</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Key Scoring Insights</h3>
+
+  <div class="callout success">
+    <div class="callout-title">SV/HD Premium Is the Biggest Edge</div>
+    <p>A 1-inning save appearance nets: <span class="formula">3.0 (IP) + 1.6 (K) + 7.2 (SV) = ~11.8 pts</span> — more than an average starter's 3 full innings. Elite closers are worth roughly <strong>$35–45</strong> in this format, and high-leverage setup men are worth $15–25. HD at 4.5 pts is worth targeting in non-save roles aggressively.</p>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Contact Hitter vs. Power Hitter Value</div>
+    <p>The AB penalty and K penalty combine to heavily tax strikeout-heavy profiles. A hitter with 200 Ks generates <span class="formula">200 × −0.7 = −140 pts</span> in K/AB losses. A contact hitter with 80 Ks saves 120 points annually before counting the actual hits. <strong>High-contact, high-walk players (similar to Nico Hoerner) are systematically undervalued</strong> in this format vs. traditional roto.</p>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">SB Is Pure Positive EV</div>
+    <p>At +2.0 per SB with no AB cost, and CS only −0.5, a runner with 75% success rate needs only <em>1 SB per 3 attempts</em> to break even. Any runner above 70% success with 20+ opportunities is a net positive. <strong>Speed skills are underpriced</strong> in this format — prioritize players with elite sprint speed.</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">QS Value Has Declined — IP Now Dominates</div>
+    <p>As league-average SP IP/start has dropped toward 5.2 innings, QS rates are falling. The real value from starters is <strong>3.0 pts per IP</strong> compounding — a 200-IP arm generates 600 pts from IP alone before Ks. Target durable arms over boom-bust high-K pitchers with injury histories.</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">GIDP Is the Hidden Killer</div>
+    <p>At −1.2 net per GIDP, slow left-handed pull hitters in front of middling lineups lose 15–25 pts annually from this stat alone. Check Statcast ground ball rates and GIDP frequency for any player you're considering at a discount.</p>
+  </div>
+
+  <h3>Hitter Archetype Rankings (This Format)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Rank</th><th>Archetype</th><th>Example Profile</th><th>Why It Works</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Elite 5-Tool (HR + SB + BB + Contact)</td><td>Acuña, Witt, De La Cruz</td><td>Maximizes every scoring category simultaneously</td></tr>
+        <tr><td>2</td><td>High-BB, High-Contact, Modest Power</td><td>Hoerner, Betts</td><td>BB free pts + low K penalty + reliable floor</td></tr>
+        <tr><td>3</td><td>Pure Power, Low K, High RBI</td><td>Langeliers, Adley Rutschman</td><td>HR/RBI pts offset by reduced K drag</td></tr>
+        <tr><td>4</td><td>Elite Speed, Adequate Contact</td><td>Jose Caballero types</td><td>SB is pure +EV in this format</td></tr>
+        <tr><td>5</td><td>High-K Power (traditional 40-HR guys)</td><td>Statcast darlings, 35% K%</td><td>Punished harder than in roto by K/AB combo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
+
+<!-- ================================================================ -->
+<!-- SECTION B: POSITIONAL SCARCITY -->
+<!-- ================================================================ -->
+<section id="positional">
+  <h2 class="section-title">B. Positional Scarcity Analysis</h2>
+
+  <p>In a 10-team points league with keeper slots, certain positions are thinned out well before auction day. Understanding which spots are depleted helps you allocate dollars efficiently and avoid paying panic prices.</p>
+
+  <h3>2026 Position Overview</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Position</th><th>Depth Grade</th><th>Top Available (Post-Keeper)</th><th>Scarcity Flag</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>C</strong></td>
+          <td><span class="tag tag-borderline">MODERATE</span></td>
+          <td>Cal Raleigh (elite), Ben Rice, William Contreras, Agustin Ramirez, Salvador Perez</td>
+          <td>Top 1–2 catchers command huge premiums; cliff drops steeply after Raleigh</td>
+        </tr>
+        <tr>
+          <td><strong>1B</strong></td>
+          <td><span class="tag tag-keep">DEEP</span></td>
+          <td>Freddie Freeman, Pete Alonso, Ryan Mountcastle, Nathaniel Lowe</td>
+          <td>Deep enough to find value late</td>
+        </tr>
+        <tr>
+          <td><strong>2B</strong></td>
+          <td><span class="tag tag-keep">DEEP</span></td>
+          <td>Ketel Marte, Jazz Chisholm, Gleyber Torres, Jorge Polanco</td>
+          <td>Deeper than typical — punting 2B is a real option</td>
+        </tr>
+        <tr>
+          <td><strong>3B</strong></td>
+          <td><span class="tag tag-borderline">THIN</span></td>
+          <td>José Ramírez, Austin Riley, Manny Machado, Alex Bregman</td>
+          <td>Top tier gets expensive fast; mid-tier dropoff is severe</td>
+        </tr>
+        <tr>
+          <td><strong>SS</strong></td>
+          <td><span class="tag tag-keep">STRONG</span></td>
+          <td>Bobby Witt Jr., Elly De La Cruz, Bo Bichette, Corey Seager, Jeremy Peña</td>
+          <td>Best overall position — multiple first-round caliber options</td></tr>
+        <tr>
+          <td><strong>OF</strong></td>
+          <td><span class="tag tag-keep">DEEP</span></td>
+          <td>Abundant options across all tiers</td>
+          <td>Let others overpay for top OF; plenty at $10–20 range</td>
+        </tr>
+        <tr>
+          <td><strong>SP</strong></td>
+          <td><span class="tag tag-borderline">MODERATE</span></td>
+          <td>Gerrit Cole, Paul Skenes, Spencer Strider (post-injury watch), Zack Wheeler</td>
+          <td>Top 10 SPs command heavy prices; depth is available</td>
+        </tr>
+        <tr>
+          <td><strong>RP/Closer</strong></td>
+          <td><span class="tag tag-drop">SCARCE</span></td>
+          <td>Félix Bautista, Mason Miller, Emmanuel Clase, Pete Fairbanks</td>
+          <td>Elite closers are most scarce — SV premium is enormous in this format</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout danger">
+    <div class="callout-title">Closer Scarcity Is the #1 Auction Priority</div>
+    <p>With SV scoring at 7.2 pts and HD at 4.5 pts, relief pitchers with role security are the most underpriced commodity in most standard auction systems. A dominant closer completing 35–40 saves generates <strong>250–290 raw SV points</strong> plus IP, Ks, and HD. Budget accordingly — plan to spend $20–$40 on at least one elite closer.</p>
+  </div>
+
+  <h3>Your Positional Coverage After Keepers</h3>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="label">Catcher</div>
+      <div class="value">Covered</div>
+      <div class="sub">Langeliers ($5) — huge surplus</div>
+    </div>
+    <div class="info-card">
+      <div class="label">2B / MI</div>
+      <div class="value">Locked</div>
+      <div class="sub">Altuve + Hoerner + Tovar</div>
+    </div>
+    <div class="info-card">
+      <div class="label">3B</div>
+      <div class="value">OPEN</div>
+      <div class="sub">Major need — top auction priority</div>
+    </div>
+    <div class="info-card">
+      <div class="label">OF</div>
+      <div class="value">Strong</div>
+      <div class="sub">Acuña, Langford, Harris, Reynolds, Ward</div>
+    </div>
+    <div class="info-card">
+      <div class="label">SP</div>
+      <div class="value">Solid</div>
+      <div class="sub">López, Woo, Pepiot, Ray, Sasaki</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Closer/RP</div>
+      <div class="value">Thin</div>
+      <div class="sub">Suarez (role change), Holmes — need upgrades</div>
+    </div>
+  </div>
+
+  <p><strong>Key Roster Gap:</strong> Your roster has no dedicated 3B or CI slot covered by keepers, and your closer situation is uncertain (Suarez moved to setup role). These are your two biggest auction priorities.</p>
+
+</section>
+
+<!-- ================================================================ -->
+<!-- SECTION C: INFLATION CALCULATION -->
+<!-- ================================================================ -->
+<section id="inflation">
+  <h2 class="section-title">C. Inflation Calculation</h2>
+
+  <p>In a keeper league, players retained below market value reduce the supply of talent available at auction while the total spending pool only decreases by keeper salaries. This creates <em>inflation</em> — available auction dollars chase fewer high-quality players.</p>
+
+  <div class="inflation-box">
+    <h3>Step-by-Step Inflation Model</h3>
+
+    <div class="inflation-step">
+      <div class="step-num">1</div>
+      <div><strong>Total League Budget:</strong> 10 teams × $260 = <span class="formula">$2,600</span></div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">2</div>
+      <div><strong>Your Keeper Salaries:</strong> Sum of all your kept players = <span class="formula">$213</span> (see keeper table below)</div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">3</div>
+      <div><strong>Estimated League-Wide Keeper Salaries:</strong> Assuming 9 other teams average ~$110 in keeper commitments = $990 + $213 = <span class="formula">~$1,203 total</span><br><small style="color:var(--text-muted)">⚠ Update this with actual league keeper data for precise calculation</small></div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">4</div>
+      <div><strong>Auction Pool Remaining:</strong> $2,600 − $1,203 = <span class="formula">$1,397 available to spend at auction</span></div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">5</div>
+      <div><strong>Real Value of Keepers at Market:</strong> Estimating keepers league-wide represent ~$1,650 in true market value (kept at below-market deals) = Value remaining in player pool: $2,600 − $1,650 = <span class="formula">$950 in real player value</span></div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">6</div>
+      <div><strong>Inflation Multiplier:</strong> <span class="formula">$1,397 ÷ $950 = 1.47×</span> — approximately <strong>47% inflation</strong></div>
+    </div>
+    <div class="inflation-step">
+      <div class="step-num">7</div>
+      <div><strong>Applying Inflation:</strong> Multiply any player's standard $260 auction value by 1.47 to get their expected auction clearing price in your league.</div>
+    </div>
+
+    <div style="margin-top:1rem; background: var(--bg); padding: 1rem; border-radius: 8px;">
+      <strong style="color:var(--gold)">Example Inflation Adjustments:</strong>
+      <div style="margin-top:0.5rem; font-size:0.88rem; color:var(--text-muted)">
+        <div>José Ramírez (base $38) → <span style="color:var(--green)">~$56 auction value</span></div>
+        <div>Cal Raleigh (base $32) → <span style="color:var(--green)">~$47 auction value</span></div>
+        <div>Spencer Strider (base $22) → <span style="color:var(--green)">~$32 auction value</span></div>
+        <div>Mid-tier SP (base $12) → <span style="color:var(--green)">~$18 auction value</span></div>
+        <div>Streaming starter (base $3) → <span style="color:var(--green)">~$4–5 auction value</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">Your Inflation Advantage</div>
+    <p>With $213 in keeper commitments locking up players worth roughly $480–520 at market, <strong>you have the largest surplus of any team</strong>. Your "real" $260 goes further than it appears because you've already secured tremendous value. Your available auction budget (after your $213 in keepers) is only <span class="formula">$47</span> — but that $47 combined with your existing roster may be the best in the league. Strategically, you can focus those remaining dollars on specific role upgrades (3B, high-end closer).</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Budget Reality Check</div>
+    <p>If all 23 of your listed players ARE your keepers (no drops), you have $47 left for any additional auction acquisitions. You may want to <strong>drop 2–3 borderline keepers</strong> to free up $10–15 additional for auction. See Keeper Matrix below for recommendations.</p>
+  </div>
+
+</section>
+
+<!-- ================================================================ -->
+<!-- SECTION D: KEEPER DECISION MATRIX -->
+<!-- ================================================================ -->
+<section id="keepers">
+  <h2 class="section-title">D. Keeper Decision Matrix — Your Roster</h2>
+
+  <p>Market values below are inflation-adjusted for this 10-team points format (multiplier ~1.47×). Surplus = Inflation-Adjusted Market Value minus Keeper Cost. Green = strong keep, Yellow = borderline, Red = consider dropping.</p>
+
+  <h3>Catchers</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Pos</th><th>Cost</th><th>Yr</th><th>Base Value</th><th>Infl. Value</th><th>Surplus</th><th>Verdict</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shea Langeliers</strong></td><td>C</td><td>$5</td><td>A</td>
+          <td>$21</td><td>$31</td><td class="surplus-pos">+$26</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Career highs: 31 HR, .277 BA in 2025. xBA (.255) and xSLG suggest some regression, but HR-friendly park and improved contact rate make him a top-3 C. At $5, elite surplus. Year A = long runway.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Infield</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Pos</th><th>Cost</th><th>Yr</th><th>Base Value</th><th>Infl. Value</th><th>Surplus</th><th>Verdict</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Jose Altuve</strong></td><td>2B</td><td>$24</td><td>E+</td>
+          <td>$19</td><td>$28</td><td class="surplus-pos">+$4</td>
+          <td><span class="tag tag-borderline">BORDERLINE</span></td>
+          <td>Projected: 23 HR, 80 R, 15 SB, .262 BA. ADP ~99th overall. Points format punishes K%, and Altuve's career-late K rate creep is a concern. Still top-5 2B. At $24 with inflation, slight surplus — but E+ means this contract year is his last at this cost. Keep for now, reassess next offseason.</td>
+        </tr>
+        <tr>
+          <td><strong>Ezequiel Tovar</strong></td><td>SS</td><td>$2</td><td>B</td>
+          <td>$16</td><td>$24</td><td class="surplus-pos">+$22</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Young SS with multi-year upside. Projected ~15 HR, 70 R, 10 SB. $2 cost is a steal. Year B = still in the sweet spot of his contract cycle. SS is strong positionally but Tovar's ceiling is solid SP2 at the position. No-brainer keep.</td>
+        </tr>
+        <tr>
+          <td><strong>Nico Hoerner</strong></td><td>2B/SS</td><td>$6</td><td>A</td>
+          <td>$22</td><td>$32</td><td class="surplus-pos">+$26</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>4th-best 2B in 2026. Projected .290+ BA, 30 SB, 70 R. In this scoring format, Hoerner's elite contact rate, high walk rate, and stolen bases make him <em>especially</em> valuable — he avoids the AB/K penalty while accumulating SB free points. ADP ~91st. Year A = long runway.</td>
+        </tr>
+        <tr>
+          <td><strong>Dansby Swanson</strong></td><td>SS/UTIL</td><td>$12</td><td>A</td>
+          <td>$14</td><td>$21</td><td class="surplus-pos">+$9</td>
+          <td><span class="tag tag-borderline">BORDERLINE</span></td>
+          <td>2025 was a step back. SS eligibility is valuable but Swanson's underlying metrics (low exit velo, elevated GB%) are mediocre. Projection: ~18 HR, 75 R, 72 RBI, 10 SB. At $12, modest surplus exists. Year A gives runway. Keep IF you're short on SS/IF depth — otherwise a drop to gain $12 auction cash is reasonable.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Outfield</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Pos</th><th>Cost</th><th>Yr</th><th>Base Value</th><th>Infl. Value</th><th>Surplus</th><th>Verdict</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Ronald Acuña Jr.</strong></td><td>OF</td><td>$37</td><td>A</td>
+          <td>$38</td><td>$56</td><td class="surplus-pos">+$19</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Nearly 2 full years post-ACL tear, expected full spring training. Consensus projections: 30 HR, 90 R, 90 RBI, 20–25 SB at ~.290. Ceiling remains top-3 fantasy player. Only risk is durability — he's played 77%+ of games in just 2 of 8 MLB seasons. At $37 with inflation pushing his market to $56, you're getting enormous value. Year A = long-term anchor.</td>
+        </tr>
+        <tr>
+          <td><strong>Bryan Reynolds</strong></td><td>OF</td><td>$14</td><td>E+</td>
+          <td>$20</td><td>$29</td><td class="surplus-pos">+$15</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Consistent producer: ~20–22 HR, 80 R, 8–12 SB, elite contact skills. In points format, his low strikeout rate is a real edge. At $14, solid surplus. E+ means approaching end — this may be your last cheap year. Maximize the value while you can.</td>
+        </tr>
+        <tr>
+          <td><strong>Wyatt Langford</strong></td><td>OF</td><td>$18</td><td>A</td>
+          <td>$26</td><td>$38</td><td class="surplus-pos">+$20</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>24 years old, 20/20 floor with room to grow. "That's just a damn good baseball player" per expert analysis. Solid across all five categories. No. 7 overall ADP range in some formats. Year A = multiple seasons of keeper value ahead. Strong keep at $18.</td>
+        </tr>
+        <tr>
+          <td><strong>Michael Harris II</strong></td><td>UTIL/OF</td><td>$15</td><td>A</td>
+          <td>$22</td><td>$32</td><td class="surplus-pos">+$17</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Elite speed + solid power combo. Projected ~18 HR, 20 SB, 80 R. Young player still developing. UTIL slot means roster flexibility. Year A = long runway, strong keep.</td>
+        </tr>
+        <tr>
+          <td><strong>Taylor Ward</strong></td><td>UTIL/OF</td><td>$4</td><td>A</td>
+          <td>$13</td><td>$19</td><td class="surplus-pos">+$15</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Projection: ~20 HR, 70 R, solid BA. UTIL eligibility adds roster value. At $4 with UTIL flexibility, one of the best value keepers on the roster. Year A.</td>
+        </tr>
+        <tr>
+          <td><strong>Kerry Carpenter</strong></td><td>OF/BENCH</td><td>$2</td><td>A</td>
+          <td>$10</td><td>$15</td><td class="surplus-pos">+$13</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>~.265 BA, 25 HR projection. Solid bench depth at $2. Year A. Keep easily.</td>
+        </tr>
+        <tr>
+          <td><strong>Luis García Jr.</strong></td><td>BENCH</td><td>$1</td><td>A</td>
+          <td>$9</td><td>$13</td><td class="surplus-pos">+$12</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Versatile infielder, solid depth. $1 = free. Year A. Always keep $1 players with multi-position eligibility.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Starting Pitchers</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Pos</th><th>Cost</th><th>Yr</th><th>Base Value</th><th>Infl. Value</th><th>Surplus</th><th>Verdict</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pablo López</strong></td><td>SP</td><td>$25</td><td>B</td>
+          <td>$20</td><td>$29</td><td class="surplus-pos">+$4</td>
+          <td><span class="tag tag-borderline">BORDERLINE</span></td>
+          <td>Ranked ~30th SP. Solid 3.50-ish ERA arm with 200 IP potential. Points format rewards his innings volume and K ability. At $25, thin surplus with inflation. Year B helps. If a healthier, younger SP is available at auction for similar cost, consider dropping — but $4 surplus still favors keeping.</td>
+        </tr>
+        <tr>
+          <td><strong>Justin Steele</strong></td><td>SP</td><td>$1</td><td>C+</td>
+          <td>$17</td><td>$25</td><td class="surplus-pos">+$24</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Internal brace surgery (not full TJ) — return expected early 2026. Career 3.18 ERA, 1.20 WHIP in 450 innings since 2022. At $1, possibly the best value on the roster. Even a half-season at his rates is worth far more than $1. Year C+ means extension decision coming — act accordingly. KEEP without hesitation.</td>
+        </tr>
+        <tr>
+          <td><strong>Ryan Pepiot</strong></td><td>SP</td><td>$2</td><td>B</td>
+          <td>$14</td><td>$21</td><td class="surplus-pos">+$19</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Consecutive years of ~3.70 ERA, 1.16 WHIP. High-floor arm. Razzball flagged as a 2026 sleeper. ADP ~18.7 in mock drafts. $2 cost with Year B runway. Excellent keep.</td>
+        </tr>
+        <tr>
+          <td><strong>Bryan Woo</strong></td><td>SP</td><td>$4</td><td>B</td>
+          <td>$24</td><td>$35</td><td class="surplus-pos">+$31</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Elite fastball duo (4-seamer + sinker). Sub-3.00 ERA for two straight years, 200+ IP path, 9+ K/9. One of the best values on the entire roster. Rising into SP1 territory at $4. Year B = long runway. Do not drop under any circumstances.</td>
+        </tr>
+        <tr>
+          <td><strong>Brady Singer</strong></td><td>SP</td><td>$1</td><td>B</td>
+          <td>$10</td><td>$15</td><td class="surplus-pos">+$14</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>4.03 ERA, 1.24 WHIP, 163 Ks in 169.2 IP for Reds in 2025. Back-end starter but durable. $1 cost = automatic keep. Year B.</td>
+        </tr>
+        <tr>
+          <td><strong>Robbie Ray</strong></td><td>SP</td><td>$3</td><td>A</td>
+          <td>$17</td><td>$25</td><td class="surplus-pos">+$22</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Fully healthy 2025: 11-8, 186 K, 3.65 ERA, 182.1 IP. Excellent across all SP scoring categories. BB rate is high (led NL with 73), which docks him in this −1.5/BB format, but K volume (1.6 pts each) and IP (3.0 each) more than compensate. At $3 with Year A, this is a steal.</td>
+        </tr>
+        <tr>
+          <td><strong>Roki Sasaki</strong></td><td>SP/P</td><td>$14</td><td>A</td>
+          <td>$10</td><td>$15</td><td class="surplus-zero">+$1</td>
+          <td><span class="tag tag-borderline">BORDERLINE</span></td>
+          <td>Pitching once/week in 2026, ~100–120 IP projected. 2025 was a rough MLB debut (control issues, possible future bullpen shift). FanGraphs projects 19 starts, 128 IP, 4.20 ERA. At $14 cost with only ~$15 inflation-adjusted value, this is essentially a break-even keep. Year A gives upside runway, but $14 is real money. <strong>Consider dropping to free up auction dollars for a higher-ceiling SP or closer.</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Yusei Kikuchi</strong></td><td>SP/BENCH</td><td>$7</td><td>A</td>
+          <td>$14</td><td>$21</td><td class="surplus-pos">+$14</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Solid lefty with K upside. $7 is reasonable for a SP3/4 with upside. Year A = no rush. Keep.</td>
+        </tr>
+        <tr>
+          <td><strong>Shane McClanahan</strong></td><td>SP/BENCH</td><td>$5</td><td>A</td>
+          <td>$19</td><td>$28</td><td class="surplus-pos">+$23</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>Recovering from Tommy John, return expected in 2026. Pre-injury: one of the elite lefties in baseball. If healthy, easily worth $25–30 at auction. At $5 with Year A, this is a lottery ticket with a massive payout if he pitches. Even 120 IP at his rates = enormous surplus. KEEP.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Relief Pitchers</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Pos</th><th>Cost</th><th>Yr</th><th>Base Value</th><th>Infl. Value</th><th>Surplus</th><th>Verdict</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Robert Suarez</strong></td><td>P/RP</td><td>$8</td><td>A</td>
+          <td>$8</td><td>$12</td><td class="surplus-pos">+$4</td>
+          <td><span class="tag tag-borderline">BORDERLINE</span></td>
+          <td><strong>⚠ Role Change Alert:</strong> Suarez lost his closing job and has moved to a setup role with the Braves. A closer's 7.2 SV score becomes 4.5 HD — dramatically reducing his value. Market value drops from ~$25 (as closer) to ~$8–12 (as elite setup man). At $8 cost, you're roughly break-even. If he can reclaim closer duties mid-season (e.g., if Rafael Iglesias falters), upside exists. Monitor closely; don't overpay to acquire his equivalent elsewhere.</td>
+        </tr>
+        <tr>
+          <td><strong>Grant Holmes</strong></td><td>P/RP</td><td>$3</td><td>A</td>
+          <td>$7</td><td>$10</td><td class="surplus-pos">+$7</td>
+          <td><span class="tag tag-keep">KEEP</span></td>
+          <td>⚠ <em>Verify current role/team heading into 2026.</em> At $3, the floor is low enough that you keep and monitor. If he holds saves/closer role, value could spike to $15–20. Year A gives time for role security to develop. Keep at $3.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Keeper Summary &amp; Recommended Drops</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Decision</th><th>Player</th><th>Cost Freed</th><th>Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag-drop">CONSIDER DROP</span></td>
+          <td><strong>Roki Sasaki</strong></td>
+          <td>$14 freed</td>
+          <td>Break-even value at $14 with once-per-week usage cap; $14 buys real help at auction</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-borderline">WATCH</span></td>
+          <td><strong>Robert Suarez</strong></td>
+          <td>$8 freed if dropped</td>
+          <td>Role demotion to setup; only keep if you expect closer promotion mid-season</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-borderline">WATCH</span></td>
+          <td><strong>Jose Altuve</strong></td>
+          <td>$24 freed if dropped</td>
+          <td>E+ contract, declining metrics, near-market cost — strongest drop candidate if budget is tight</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-keep">LOCK</span></td>
+          <td>Bryan Woo, Justin Steele, Nico Hoerner, Shea Langeliers, Robbie Ray, Ryan Pepiot</td>
+          <td>—</td>
+          <td>Best value keepers — do not drop under any circumstances</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-title">If You Drop Sasaki + Suarez</div>
+    <p>Dropping both frees up $22 in additional auction dollars on top of your remaining $47, giving you <strong>~$69 to deploy at auction</strong>. Combined with your already-locked keeper surplus, you'd have one of the strongest rosters in the league entering auction day. Use that $69 to target: (1) an elite 3B (José Ramírez, Alex Bregman), (2) a locked elite closer, and (3) a mid-tier SP upgrade if available.</p>
+  </div>
+
+</section>
+
+<!-- ================================================================ -->
+<!-- SECTION E: PITCHING LANDSCAPE -->
+<!-- ================================================================ -->
+<section id="pitching">
+  <h2 class="section-title">E. Pitching Landscape Analysis</h2>
+
+  <h3>SP Usage Trends &amp; IP Landscape (2026)</h3>
+  <p>The league-wide average innings per start has declined to approximately <strong>5.0–5.2 IP per outing</strong>, driven by front-office emphasis on pitch count limits and the three-time-through-the-order penalty. This has structural implications for your scoring system:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>IP/Start</th><th>Approx QS%</th><th>Points from IP (avg)</th><th>QS Pts Earned</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>4.0 IP</td><td>~15%</td><td>12 pts</td><td>0.2 avg</td></tr>
+        <tr><td>5.0 IP</td><td>~35%</td><td>15 pts</td><td>0.5 avg</td></tr>
+        <tr><td>6.0 IP</td><td>~65%</td><td>18 pts</td><td>1.0 avg</td></tr>
+        <tr><td>7.0+ IP</td><td>~85%</td><td>21+ pts</td><td>1.3 avg</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Conclusion:</strong> In your scoring system, QS is a secondary bonus — IP is the primary driver. Pay for workhorses who consistently reach 6+ IP rather than boom-bust arms who either dominate or collapse early.</p>
+
+  <h3>Closer Tier Breakdown (2026)</h3>
+
+  <div class="tier tier-1">
+    <div class="tier-header">TIER 1 — Elite Closers ($30–45 Infl. Value)</div>
+    <div class="tier-body">
+      <strong>Félix Bautista (BAL), Mason Miller (OAK), Emmanuel Clase (CLE), Pete Fairbanks (TB)</strong><br>
+      Role-secure, elite stuff, 35+ save opportunities. Generate 250+ SV pts + strong IP and K contributions. SV at 7.2 pts makes these the most valuable non-elite-SP players in the format. Budget $35–45+ to acquire any of these at auction.
+    </div>
+  </div>
+  <div class="tier tier-2">
+    <div class="tier-header">TIER 2 — Solid Closers ($18–30 Infl. Value)</div>
+    <div class="tier-body">
+      <strong>Andrés Muñoz (SEA), Tanner Scott (LAD), Ryan Helsley (STL), David Bednar (PIT), Jhoan Duran (MIN)</strong><br>
+      Strong closer roles with moderate committee risk. 25–35 save opportunities expected. These are your auction targets if Tier 1 runs out of your price range.
+    </div>
+  </div>
+  <div class="tier tier-3">
+    <div class="tier-header">TIER 3 — Speculative/Streaming Closers ($8–18 Infl. Value)</div>
+    <div class="tier-body">
+      <strong>Jordan Romano (PHI), A.J. Puk (MIA), Bryan Abreu (HOU), Kyle Finnegan (WAS)</strong><br>
+      Save opportunities exist but role security varies. Buy at fair value; don't overpay. Good streaming targets if you land Tier 1–2 closers as anchors.
+    </div>
+  </div>
+  <div class="tier tier-4">
+    <div class="tier-header">TIER 4 — High-Leverage Setup (4.5 HD Value)</div>
+    <div class="tier-body">
+      <strong>Robert Suarez (ATL), Josh Hader types, Evan Phillips (LAD)</strong><br>
+      At 4.5 pts per hold, elite setup men average 20–30 HDs annually = 90–135 hold points alone. Add IP (3.0) and K (1.6) for a high-floor contributor. Target in later auction rounds at $5–10.
+    </div>
+  </div>
+  <div class="tier tier-5">
+    <div class="tier-header">AVOID — Committee Situations / Blown Save Prone</div>
+    <div class="tier-body">
+      <strong>Any team running a closer committee, pitchers with 5+ BS in recent seasons</strong><br>
+      At −3.0 per BS plus −3.0 per loss, a closer with 6 blown saves loses 18 points from BS alone — nearly three full save opportunities erased. Avoid.
+    </div>
+  </div>
+
+  <h3>Holds Value Analysis — The Underrated Asset</h3>
+  <p>At 4.5 pts per HD, a reliever collecting 30 holds per season generates <strong>135 hold points</strong>. Add 60 IP × 3.0 = 180 pts, plus 70 K × 1.6 = 112 pts = roughly <strong>427 total points</strong> from a high-leverage setup man. Compare this to a No. 4 starter who might generate 350–400 pts on the season. <strong>High-leverage non-closer relievers are chronically undervalued</strong> in this format. Budget $8–15 for one elite setup arm as a second bullpen piece.</p>
+
+  <h3>Committee Situations to Avoid (2026)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Team</th><th>Status</th><th>Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Chicago White Sox</td><td>Seranthony Dominguez declared closer, but Grant Taylor/Jordan Leasure earned roles in 2025</td><td>HIGH — committee likely</td></tr>
+        <tr><td>Atlanta Braves</td><td>Rafael Iglesias declared closer (1yr/$16M), but Suarez in setup — fragile hierarchy</td><td>MODERATE — Suarez ready if Iglesias falters</td></tr>
+        <tr><td>Any team mid-rebuild</td><td>Multiple candidates, no clear incumbent</td><td>HIGH — avoid until role clarifies</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
+
+<!-- ================================================================ -->
+<!-- SECTION F: AUCTION STRATEGY FRAMEWORK -->
+<!-- ================================================================ -->
+<section id="strategy">
+  <h2 class="section-title">F. Auction Strategy Framework</h2>
+
+  <h3>Budget Allocation by Position</h3>
+
+  <div class="callout">
+    <div class="callout-title">Your Effective Auction Budget</div>
+    <p>You enter auction day having already spent $213 of your $260. Your remaining dollars are limited — use them surgically. The standard 65/35 (hitter/pitcher) split applies to teams without keeper commitments; yours should be more surgical.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Target</th><th>Recommended Spend</th><th>Priority</th><th>Reasoning</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Elite 3B (Ramírez / Bregman / Riley)</td>
+          <td>$25–$38</td>
+          <td style="color:var(--red)">HIGHEST</td>
+          <td>Biggest positional gap; inflation means market 3B costs $40–50, so aim for tier-2 value</td>
+        </tr>
+        <tr>
+          <td>Elite Closer (if Tier 1–2 available)</td>
+          <td>$20–$35</td>
+          <td style="color:var(--red)">HIGHEST</td>
+          <td>SV premium is massive; Suarez's setup role leaves you exposed here</td>
+        </tr>
+        <tr>
+          <td>Utility/OF depth (if Swanson dropped)</td>
+          <td>$5–$12</td>
+          <td style="color:var(--yellow)">MODERATE</td>
+          <td>OF is deep; late-round value abundant</td>
+        </tr>
+        <tr>
+          <td>Bench/Lottery arms (SP)</td>
+          <td>$1–$3</td>
+          <td style="color:var(--text-muted)">LOW</td>
+          <td>Already have deep SP corps; any adds are gravy</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Stars &amp; Scrubs vs. Balanced Approach</h3>
+  <p>In this scoring format, <strong>Stars &amp; Scrubs favors your situation</strong>. You already have a deep keeper base providing consistent floor. Your auction dollars should be concentrated on one or two premium targets (3B and a closer) rather than spread thin across 4–5 mid-tier players. Points leagues with high scoring rates reward roster dominance at key positions more than balanced mediocrity.</p>
+
+  <h3>In-Auction Tactical Notes</h3>
+  <div class="callout">
+    <div class="callout-title">Nominate Your Non-Targets First</div>
+    <p>Early in the auction, nominate elite catchers (Cal Raleigh), elite OF, and players you don't need. Let other teams deplete their budgets chasing positions you're already covered at. Then strike in the middle portion of the auction when budgets are reduced but your specific targets (3B, closer) haven't been exhausted.</p>
+  </div>
+  <div class="callout warn">
+    <div class="callout-title">Inflation Creates Price Anchoring Traps</div>
+    <p>With ~47% inflation, players will seem expensive vs. their base values. Don't anchor to pre-inflation prices — $40+ for a Tier 1 closer is <em>correct</em> in your market. The mistake is paying $35 for a Tier 2 arm thinking you're getting a deal when you're actually overpaying at 1.47×.</p>
+  </div>
+  <div class="callout success">
+    <div class="callout-title">The Late Auction Endgame</div>
+    <p>Reserve $8–12 for the final 20% of the auction. Late auction presents the best value — teams run out of budget and elite players go for $1–3 due to budget constraints. Your keeper savings give you budget flexibility to exploit this window. Have a list of 5–8 "price is right" targets for the final bidding phase.</p>
+  </div>
+
+  <h3>Roster Construction Philosophy</h3>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="label">Approach</div>
+      <div class="value">Stars + Depth</div>
+      <div class="sub">Already have the stars via keepers; buy depth selectively</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Biggest Need</div>
+      <div class="value">3B &amp; Closer</div>
+      <div class="sub">Two clear gaps to fill with remaining auction dollars</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Avoid</div>
+      <div class="value">Mid-Price SP</div>
+      <div class="sub">Already have 6+ starters; don't waste $10–15 on a 7th</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Inflation Edge</div>
+      <div class="value">~47%</div>
+      <div class="sub">Adjust all values before bidding</div>
+    </div>
+  </div>
+
+  <h3>Pre-Auction Checklist</h3>
+  <ol style="padding-left:1.5rem; color:var(--text-muted); margin-top:0.5rem;">
+    <li style="margin:0.4rem 0">Finalize keeper decisions — confirm drops (Sasaki? Suarez? Altuve?)</li>
+    <li style="margin:0.4rem 0">Calculate exact remaining budget after keepers</li>
+    <li style="margin:0.4rem 0">Research 3B landscape — know your max bid for Ramírez/Bregman/Riley</li>
+    <li style="margin:0.4rem 0">Identify your Tier 1–2 closer target and max bid</li>
+    <li style="margin:0.4rem 0">Build a nomination list (players others want, not you)</li>
+    <li style="margin:0.4rem 0">Set hard stops: never exceed $X for any player (discipline over FOMO)</li>
+    <li style="margin:0.4rem 0">Read part2 (hitters) and part3 (pitchers) for deeper profile analysis</li>
+  </ol>
+
+</section>
+
+</main>
+
+<footer>
+  <p>2026 Fantasy Baseball Research Report — Part 1 of 4</p>
+  <p style="margin-top:0.5rem">Data sourced from Baseball Savant, Fangraphs, Baseball Reference, RotoWire, Razzball, FantasyPros, CBS Sports, NBC Sports, and Athlon Sports (March 2026). All values are estimates — adjust with live auction calculator before draft day.</p>
+  <p style="margin-top:0.5rem">Continue to: <strong>Part 2 — Hitter Profiles</strong> | <strong>Part 3 — Pitcher Profiles</strong> | <strong>Part 4 — Auction Day Strategy</strong></p>
+</footer>
+
+</body>
+</html>
